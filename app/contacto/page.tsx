@@ -62,7 +62,7 @@ export default function ContactoPage() {
               </div>
 
               {/* Imagen — segunda en el DOM (debajo en móvil), izquierda en desktop */}
-              <div className="md:order-1 flex flex-col justify-start gap-6 md:mt-10">
+              <div className="hidden md:flex md:order-1 flex-col justify-start gap-6 md:mt-10">
                 <Image
                   src="/ubicacion.webp"
                   alt="Ubicaciones donde opera FOCUS Hub: New York, Houston, Tampa, Orlando, San Juan, Ponce"
