@@ -27,7 +27,7 @@ export default function ContactoPage() {
                   strokeLinejoin="round"
                 />
               </svg>
-              Auditoría gratuita
+              Sesión personalizada
             </span>
             <h1 className="mt-5 text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.15]">
               ¿Tu negocio está listo para escalar, pero le falta la estrategia y los sistemas para lograrlo?
