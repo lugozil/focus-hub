@@ -24,7 +24,9 @@ export default function ContactoCPage() {
                 Calculadora para dealers
               </span>
               <h1 className="mt-5 text-2xl md:text-4xl font-semibold tracking-[-0.02em] leading-[1.15]">
-                ¿Cuánto dinero está dejando pasar tu dealership cada mes?
+                ¿Cuánto dinero está dejando pasar
+                <br className="hidden md:block" />
+                {" "}tu dealership cada mes?
               </h1>
               <p className="mt-4 text-sm md:text-base text-silver-300 leading-relaxed">
                 Mueve los controles y descubre en segundos el tamaño real de la oportunidad que estás dejando sobre la mesa.
