@@ -81,7 +81,7 @@ export default function ContactoBPage() {
               </div>
 
               <div id="formulario" className="[grid-area:form] mx-auto w-full max-w-md md:max-w-none">
-                <AllAtOnceForm />
+                <AllAtOnceForm variante="contacto-b" />
               </div>
 
             </div>

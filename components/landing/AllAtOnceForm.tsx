@@ -57,7 +57,7 @@ function resolveCargo(values: Values) {
   return values.cargo === "Otro" ? values.cargoOtro.trim() : values.cargo;
 }
 
-export function AllAtOnceForm() {
+export function AllAtOnceForm({ variante = "contacto-b" }: { variante?: string }) {
   const [values, setValues] = useState<Values>(INITIAL_VALUES);
   const [submitted, setSubmitted] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -80,7 +80,7 @@ export function AllAtOnceForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          variante: "contacto-b",
+          variante,
           nombre: values.nombre.trim(),
           telefono: values.telefono.trim(),
           email: values.email.trim(),
