@@ -188,6 +188,42 @@ html { scroll-behavior: smooth; }
   color: #FFFFFF;
 }
 
+/* ---------- Formulario denso (todos los campos a la vez) ---------- */
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+  margin-bottom: 6px;
+}
+
+.form-control {
+  width: 100%;
+  border: 1px solid var(--color-silver-300);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--color-ink);
+  background: #FFFFFF;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.form-control:focus {
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 3px rgba(42, 42, 42, 0.08);
+}
+.form-control.has-error {
+  border-color: #dc2626;
+}
+
+.form-error {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #dc2626;
+}
+
 /* ---------- Animations ---------- */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
