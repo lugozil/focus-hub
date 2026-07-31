@@ -71,13 +71,14 @@ export default function ContactoBPage() {
               </div>
 
               <div className="[grid-area:video] mx-auto md:mx-0 md:ml-1 aspect-[9/16] w-full max-w-[280px] md:max-w-[320px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
-                <iframe
-                  src="https://www.youtube.com/embed/L1SXZ0nFGu4"
-                  title="Video FOCUS Hub"
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
+                <video
+                  src="/VSL.mp4"
+                  controls
+                  playsInline
+                  className="w-full h-full object-cover"
+                >
+                  Tu navegador no soporta la reproducción de video.
+                </video>
               </div>
 
               <div id="formulario" className="[grid-area:form] mx-auto w-full max-w-md md:max-w-none">

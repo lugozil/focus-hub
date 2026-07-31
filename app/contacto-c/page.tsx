@@ -29,7 +29,9 @@ export default function ContactoCPage() {
                 {" "}tu dealership cada mes?
               </h1>
               <p className="mt-4 text-sm md:text-base text-silver-300 leading-relaxed">
-                Mueve los controles y descubre en segundos el tamaño real de la oportunidad que estás dejando sobre la mesa.
+                Mueve los controles y descubre en segundos el tamaño real
+                <br className="hidden md:block" />
+                {" "}de la oportunidad que estás dejando sobre la mesa.
               </p>
             </div>
 
