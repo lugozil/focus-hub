@@ -24,10 +24,9 @@ export default function ContactoBPage() {
           </div>
 
           <div className="relative mx-auto max-w-6xl px-6 pt-16 pb-20 md:pt-24 md:pb-24">
-            <div className="grid md:grid-cols-2 gap-10 md:gap-16 items-start">
+            <div className="contacto-b-grid animate-fade-up">
 
-              {/* Columna izquierda: eyebrow, título, párrafo, CTA, VSL */}
-              <div className="animate-fade-up">
+              <div className="[grid-area:eyebrow] flex justify-center md:justify-start">
                 <span className="eyebrow-pill">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path
@@ -38,23 +37,25 @@ export default function ContactoBPage() {
                       strokeLinejoin="round"
                     />
                   </svg>
-                  Sesión personalizada
+                  Ecosistema para dealers
                 </span>
+              </div>
 
-                <h1 className="mt-5 text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.15]">
-                  ¿Tu dealership está listo
-                  <br />
-                  para escalar?
-                </h1>
+              <h1 className="[grid-area:title] text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.15] text-center md:text-left">
+                Más leads calificados.
+                <br />
+                Más ventas cerradas.
+              </h1>
 
-                <p className="mt-4 text-sm md:text-base text-ink-muted leading-relaxed max-w-md">
-                  Cuéntanos sobre tu dealership en menos de 60 segundos y descubre dónde estás dejando ventas sobre la mesa — con un plan hecho a tu medida.{" "}
-                  <span className="text-ink font-medium">Auditoría gratuita. Sin compromiso.</span>
-                </p>
+              <p className="[grid-area:paragraph] text-sm md:text-base text-ink-muted leading-relaxed text-justify">
+                Cuéntanos sobre tu dealership en menos de 60 segundos y descubre dónde estás dejando ventas sobre la mesa — con un plan hecho a tu medida.{" "}
+                <span className="text-ink font-medium">Auditoría gratuita. Sin compromiso.</span>
+              </p>
 
+              <div className="[grid-area:cta] flex justify-center md:hidden">
                 <a
                   href="#formulario"
-                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-ink text-white text-[13px] font-medium px-5 py-3 hover:bg-ink-soft transition-colors shadow-[0_8px_20px_-8px_rgba(42,42,42,0.4)]"
+                  className="inline-flex items-center gap-2 rounded-full bg-ink text-white text-[13px] font-medium px-5 py-3 hover:bg-ink-soft transition-colors shadow-[0_8px_20px_-8px_rgba(42,42,42,0.4)]"
                 >
                   Solicitar Asesoría
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -67,20 +68,19 @@ export default function ContactoBPage() {
                     />
                   </svg>
                 </a>
-
-                <div className="mt-8 aspect-[9/16] w-full max-w-[280px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
-                  <iframe
-                    src="https://www.youtube.com/embed/L1SXZ0nFGu4"
-                    title="Video FOCUS Hub"
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                  />
-                </div>
               </div>
 
-              {/* Columna derecha: formulario completo */}
-              <div id="formulario" className="animate-fade-up-delay">
+              <div className="[grid-area:video] mx-auto aspect-[9/16] w-full max-w-[280px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
+                <iframe
+                  src="https://www.youtube.com/embed/L1SXZ0nFGu4"
+                  title="Video FOCUS Hub"
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+
+              <div id="formulario" className="[grid-area:form] mx-auto w-full max-w-md md:max-w-none">
                 <AllAtOnceForm />
               </div>
 

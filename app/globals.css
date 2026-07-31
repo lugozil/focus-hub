@@ -224,6 +224,32 @@ html { scroll-behavior: smooth; }
   color: #dc2626;
 }
 
+/* ---------- Layout contacto-b (orden distinto en móvil vs escritorio) ---------- */
+.contacto-b-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  grid-template-areas:
+    "eyebrow"
+    "title"
+    "paragraph"
+    "cta"
+    "video"
+    "form";
+}
+
+@media (min-width: 768px) {
+  .contacto-b-grid {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 3.5rem;
+    row-gap: 1.5rem;
+    grid-template-areas:
+      "eyebrow paragraph"
+      "title paragraph"
+      "video form";
+  }
+}
+
 /* ---------- Animations ---------- */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(8px); }
