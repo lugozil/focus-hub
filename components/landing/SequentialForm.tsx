@@ -137,7 +137,7 @@ export function SequentialForm() {
   }
 
   return (
-    <div className="rounded-2xl border border-silver-200 bg-white p-8 md:p-12 min-h-[420px] flex flex-col">
+    <div className="rounded-2xl border border-silver-200 bg-white p-8 md:p-12">
       {/* Barra de progreso */}
       <div className="flex items-center gap-3 mb-8">
         <div className="flex-1 h-1 rounded-full bg-silver-200 overflow-hidden">
@@ -153,10 +153,10 @@ export function SequentialForm() {
 
       <form
         onSubmit={handleFormSubmit}
-        className="flex flex-col flex-1 animate-fade-up"
+        className="animate-fade-up"
         key={step}
       >
-        <div className="flex-1">
+        <div>
           {step === 0 && (
             <Step
               question="¿Cómo te llamas?"
@@ -257,7 +257,7 @@ export function SequentialForm() {
           )}
         </div>
 
-        <div className="mt-8 flex items-center justify-between">
+        <div className="mt-6 flex items-center justify-between">
           {step > 0 ? (
             <button
               type="button"
