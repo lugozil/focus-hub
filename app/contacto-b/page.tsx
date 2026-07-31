@@ -70,7 +70,7 @@ export default function ContactoBPage() {
                 </a>
               </div>
 
-              <div className="[grid-area:video] mx-auto aspect-[9/16] w-full max-w-[280px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
+              <div className="[grid-area:video] mx-auto md:mx-0 md:ml-1 aspect-[9/16] w-full max-w-[280px] md:max-w-[320px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
                 <iframe
                   src="https://www.youtube.com/embed/L1SXZ0nFGu4"
                   title="Video FOCUS Hub"
