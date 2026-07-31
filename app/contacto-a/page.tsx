@@ -38,11 +38,11 @@ export default function ContactoAPage() {
                 Sesión personalizada
               </span>
               <h1 className="mt-5 text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.15]">
-                ¿Tu negocio está listo para escalar?
+                ¿Tu dealership está listo para escalar?
               </h1>
               <p className="mt-4 text-sm md:text-base text-ink-muted leading-relaxed max-w-md mx-auto">
-                Responde estas preguntas y agenda tu auditoría de negocio gratuita.{" "}
-                <span className="text-ink font-medium">Sin costo. Sin compromiso.</span>
+                Cuéntanos sobre tu dealership en menos de 60 segundos y descubre dónde estás dejando ventas sobre la mesa — con un plan hecho a tu medida.{" "}
+                <span className="text-ink font-medium">Auditoría gratuita. Sin compromiso.</span>
               </p>
             </div>
 

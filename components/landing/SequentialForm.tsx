@@ -139,11 +139,16 @@ export function SequentialForm() {
   return (
     <div className="rounded-2xl border border-silver-200 bg-white p-8 md:p-12 min-h-[420px] flex flex-col">
       {/* Barra de progreso */}
-      <div className="h-1 rounded-full bg-silver-200 overflow-hidden mb-8">
-        <div
-          className="h-full bg-ink transition-all duration-500 ease-out rounded-full"
-          style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
-        />
+      <div className="flex items-center gap-3 mb-8">
+        <div className="flex-1 h-1 rounded-full bg-silver-200 overflow-hidden">
+          <div
+            className="h-full bg-ink transition-all duration-500 ease-out rounded-full"
+            style={{ width: `${((step + 1) / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+        <span className="text-[11px] font-medium text-ink-faint whitespace-nowrap">
+          {step + 1} / {TOTAL_STEPS}
+        </span>
       </div>
 
       <form
@@ -300,7 +305,7 @@ function Step({
 }) {
   return (
     <div>
-      <h2 className="text-xl md:text-2xl font-semibold tracking-[-0.01em] text-ink leading-snug">
+      <h2 className="text-base md:text-lg font-semibold tracking-[-0.01em] text-ink leading-snug">
         {question}
       </h2>
       {helper && <p className="mt-1 text-[13px] text-ink-faint">{helper}</p>}
