@@ -8,9 +8,9 @@ export function LandingFooter() {
         <Image
           src="/icono-focus.png"
           alt="FOCUS Hub"
-          width={28}
-          height={28}
-          className="h-6 w-6 opacity-80"
+          width={56}
+          height={56}
+          className="h-12 w-12 opacity-80"
         />
         <p className="text-[12px] text-ink-faint">© {year} FOCUS Hub.</p>
       </div>

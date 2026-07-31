@@ -38,7 +38,7 @@ export default function ContactoAPage() {
                 Sesión personalizada
               </span>
               <h1 className="mt-5 text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.15]">
-                ¿Tu dealership está listo:
+                ¿Tu dealership está listo
                 <br />
                 para escalar?
               </h1>
