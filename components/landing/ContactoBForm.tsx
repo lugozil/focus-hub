@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { track } from "@vercel/analytics";
 
 type Values = {
   nombre: string;
@@ -177,6 +178,7 @@ export function ContactoBForm() {
     e.preventDefault();
     setFormSubmitted(true);
     if (Object.keys(validate(values)).length > 0) return;
+    track("contacto_b_formulario_completo");
     setStep("schedule");
   }
 
@@ -201,6 +203,7 @@ export function ContactoBForm() {
         }),
       });
       if (!res.ok) throw new Error("request-failed");
+      track("contacto_b_cita_agendada");
       setStep("success");
     } catch {
       setStatus("error");
