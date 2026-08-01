@@ -70,26 +70,57 @@ function formatTime(time: string) {
   return `${h12}:${mStr} ${period}`;
 }
 
-function getBusinessDays(count: number): Date[] {
-  const days: Date[] = [];
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  cursor.setDate(cursor.getDate() + 1);
+const WEEKDAY_LABELS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 
-  while (days.length < count) {
-    const day = cursor.getDay();
-    if (day !== 0 && day !== 6) days.push(new Date(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return days;
+function startOfDay(date: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
-const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("es", {
-  weekday: "short",
-  day: "2-digit",
-  month: "short",
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, delta: number) {
+  return new Date(date.getFullYear(), date.getMonth() + delta, 1);
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.toDateString() === b.toDateString();
+}
+
+function isSelectableDay(date: Date, minDate: Date) {
+  const day = date.getDay();
+  return day !== 0 && day !== 6 && date.getTime() >= minDate.getTime();
+}
+
+function buildMonthGrid(month: Date): (Date | null)[][] {
+  const year = month.getFullYear();
+  const monthIndex = month.getMonth();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  const firstWeekday = (new Date(year, monthIndex, 1).getDay() + 6) % 7; // 0 = lunes
+
+  const cells: (Date | null)[] = Array(firstWeekday).fill(null);
+  for (let day = 1; day <= daysInMonth; day++) {
+    cells.push(new Date(year, monthIndex, day));
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  const weeks: (Date | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+const MONTH_LABEL_FORMATTER = new Intl.DateTimeFormat("es", {
+  month: "long",
+  year: "numeric",
 });
+
+function formatMonthLabel(date: Date) {
+  const label = MONTH_LABEL_FORMATTER.format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
 
 const FULL_DATE_FORMATTER = new Intl.DateTimeFormat("es", {
   weekday: "long",
@@ -115,7 +146,19 @@ export function ContactoBForm() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const businessDays = useMemo(() => getBusinessDays(10), []);
+  const today = useMemo(() => startOfDay(new Date()), []);
+  const minSelectableDate = useMemo(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + 1);
+    return d;
+  }, [today]);
+  const minMonth = useMemo(() => startOfMonth(today), [today]);
+  const maxMonth = useMemo(() => addMonths(minMonth, 2), [minMonth]);
+  const [visibleMonth, setVisibleMonth] = useState<Date>(minMonth);
+
+  const monthWeeks = useMemo(() => buildMonthGrid(visibleMonth), [visibleMonth]);
+  const canGoPrevMonth = visibleMonth.getTime() > minMonth.getTime();
+  const canGoNextMonth = visibleMonth.getTime() < maxMonth.getTime();
 
   const update = (patch: Partial<Values>) =>
     setValues((prev) => ({ ...prev, ...patch }));
@@ -218,22 +261,78 @@ export function ContactoBForm() {
 
         <div>
           <label className="form-label">Selecciona un día</label>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-            {businessDays.map((day) => (
+
+          <div className="rounded-2xl border border-silver-200 p-3 md:p-4">
+            <div className="flex items-center justify-between px-1 pb-3">
               <button
-                key={day.toISOString()}
                 type="button"
-                onClick={() => {
-                  setSelectedDate(day);
-                  setSelectedTime(null);
-                }}
-                className={optionButtonClass(
-                  selectedDate?.toDateString() === day.toDateString()
-                )}
+                onClick={() => canGoPrevMonth && setVisibleMonth((m) => addMonths(m, -1))}
+                disabled={!canGoPrevMonth}
+                aria-label="Mes anterior"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-ink-soft hover:bg-silver-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                {SHORT_DATE_FORMATTER.format(day)}
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
-            ))}
+
+              <span className="text-sm font-semibold text-ink">
+                {formatMonthLabel(visibleMonth)}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => canGoNextMonth && setVisibleMonth((m) => addMonths(m, 1))}
+                disabled={!canGoNextMonth}
+                aria-label="Mes siguiente"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-ink-soft hover:bg-silver-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M5 2l5 5-5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-7 gap-y-1 text-center">
+              {WEEKDAY_LABELS.map((label) => (
+                <span key={label} className="text-[11px] font-medium uppercase tracking-wide text-ink-faint py-1">
+                  {label}
+                </span>
+              ))}
+
+              {monthWeeks.map((week, weekIndex) =>
+                week.map((day, dayIndex) => {
+                  if (!day) return <span key={`${weekIndex}-${dayIndex}`} />;
+
+                  const selectable = isSelectableDay(day, minSelectableDate);
+                  const isSelected = selectedDate ? isSameDay(day, selectedDate) : false;
+                  const isToday = isSameDay(day, today);
+
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      disabled={!selectable}
+                      onClick={() => {
+                        setSelectedDate(day);
+                        setSelectedTime(null);
+                      }}
+                      className={[
+                        "mx-auto my-0.5 flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors",
+                        !selectable
+                          ? "text-ink-faint/50 cursor-not-allowed"
+                          : isSelected
+                            ? "bg-ink text-white"
+                            : "text-ink hover:bg-silver-100",
+                        isToday && !isSelected ? "ring-1 ring-inset ring-silver-300" : "",
+                      ].join(" ")}
+                    >
+                      {day.getDate()}
+                    </button>
+                  );
+                })
+              )}
+            </div>
           </div>
         </div>
 
