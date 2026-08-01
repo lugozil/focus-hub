@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { AllAtOnceForm } from "@/components/landing/AllAtOnceForm";
+import { ContactoBForm } from "@/components/landing/ContactoBForm";
 
 export const metadata: Metadata = {
   title: "Contacto — FOCUS Hub",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function ContactoBPage() {
   return (
     <>
-      <LandingHeader />
+      <LandingHeader logoClassName="h-6 w-auto" />
       <main id="top">
         <section className="relative isolate overflow-hidden">
           <div aria-hidden className="mesh-bg">
@@ -52,25 +52,7 @@ export default function ContactoBPage() {
                 <span className="text-ink font-medium">Auditoría gratuita. Sin compromiso.</span>
               </p>
 
-              <div className="[grid-area:cta] flex justify-center md:hidden">
-                <a
-                  href="#formulario"
-                  className="inline-flex items-center gap-2 rounded-full bg-ink text-white text-[13px] font-medium px-5 py-3 hover:bg-ink-soft transition-colors shadow-[0_8px_20px_-8px_rgba(42,42,42,0.4)]"
-                >
-                  Solicitar Asesoría
-                  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-                    <path
-                      d="M3 7h8m0 0L7.5 3.5M11 7l-3.5 3.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </a>
-              </div>
-
-              <div className="[grid-area:video] mx-auto md:mx-0 md:ml-1 aspect-[9/16] w-full max-w-[280px] md:max-w-[320px] rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
+              <div className="[grid-area:video] mx-auto md:mx-0 aspect-video w-full max-w-[420px] md:max-w-none rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
                 <video
                   src="/VSL.mp4"
                   controls
@@ -82,7 +64,7 @@ export default function ContactoBPage() {
               </div>
 
               <div id="formulario" className="[grid-area:form] mx-auto w-full max-w-md md:max-w-none">
-                <AllAtOnceForm variante="contacto-b" />
+                <ContactoBForm />
               </div>
 
             </div>

@@ -1,6 +1,12 @@
 import Image from "next/image";
 
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({
+  className = "",
+  imgClassName = "h-8 w-auto",
+}: {
+  className?: string;
+  imgClassName?: string;
+}) {
   return (
     <a href="#top" className={`inline-flex items-center ${className}`}>
       <Image
@@ -9,7 +15,7 @@ export function Logo({ className = "" }: { className?: string }) {
         width={180}
         height={40}
         priority
-        className="h-8 w-auto"
+        className={imgClassName}
       />
     </a>
   );

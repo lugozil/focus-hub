@@ -6,13 +6,18 @@ type LeadPayload = {
   telefono: string;
   email: string;
   cargo: string;
-  inversion: string;
+  inversion?: string;
+  dealership?: string;
+  carrosPorMes?: string;
+  fechaCita?: string;
+  horaCita?: string;
 };
 
 function isValidPayload(body: unknown): body is LeadPayload {
   if (!body || typeof body !== "object") return false;
   const b = body as Record<string, unknown>;
-  return (
+
+  const hasBaseFields =
     typeof b.variante === "string" &&
     typeof b.nombre === "string" &&
     b.nombre.trim().length > 0 &&
@@ -21,10 +26,24 @@ function isValidPayload(body: unknown): body is LeadPayload {
     typeof b.email === "string" &&
     b.email.trim().length > 0 &&
     typeof b.cargo === "string" &&
-    b.cargo.trim().length > 0 &&
-    typeof b.inversion === "string" &&
-    b.inversion.trim().length > 0
-  );
+    b.cargo.trim().length > 0;
+
+  if (!hasBaseFields) return false;
+
+  if (b.variante === "contacto-b") {
+    return (
+      typeof b.dealership === "string" &&
+      b.dealership.trim().length > 0 &&
+      typeof b.carrosPorMes === "string" &&
+      b.carrosPorMes.trim().length > 0 &&
+      typeof b.fechaCita === "string" &&
+      b.fechaCita.trim().length > 0 &&
+      typeof b.horaCita === "string" &&
+      b.horaCita.trim().length > 0
+    );
+  }
+
+  return typeof b.inversion === "string" && b.inversion.trim().length > 0;
 }
 
 export async function POST(request: Request) {
