@@ -46,6 +46,45 @@ function isValidPayload(body: unknown): body is LeadPayload {
   return typeof b.inversion === "string" && b.inversion.trim().length > 0;
 }
 
+function splitNombre(nombre: string) {
+  const parts = nombre.trim().split(/\s+/);
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+async function sendToGHL(body: LeadPayload) {
+  const webhookUrl = process.env.GHL_WEBHOOK_URL;
+  if (!webhookUrl) return;
+
+  const { firstName, lastName } = splitNombre(body.nombre);
+
+  try {
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        phone: body.telefono,
+        email: body.email,
+        cargo: body.cargo,
+        variante: body.variante,
+        dealership: body.dealership ?? "",
+        carrosPorMes: body.carrosPorMes ?? "",
+        inversion: body.inversion ?? "",
+        fechaCita: body.fechaCita ?? "",
+        horaCita: body.horaCita ?? "",
+        source: `focushub.one/${body.variante}`,
+      }),
+    });
+    if (!res.ok) throw new Error(`ghl-status-${res.status}`);
+  } catch (error) {
+    console.error("Error al enviar el lead a GHL", error);
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
 
@@ -60,6 +99,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server-misconfigured" }, { status: 500 });
   }
 
+  const ghlPromise = sendToGHL(body);
+
   try {
     const res = await fetch(scriptUrl, {
       method: "POST",
@@ -70,9 +111,11 @@ export async function POST(request: Request) {
 
     if (!res.ok) throw new Error(`apps-script-status-${res.status}`);
 
+    await ghlPromise;
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Error al guardar el lead vía Apps Script", error);
+    await ghlPromise;
     return NextResponse.json({ ok: false, error: "sheets-append-failed" }, { status: 502 });
   }
 }

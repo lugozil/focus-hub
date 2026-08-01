@@ -72,10 +72,17 @@ function formatTime(time: string) {
 
 const WEEKDAY_LABELS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 
-function startOfDay(date: Date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+const PR_DATE_PARTS_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Puerto_Rico",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+function todayInPuertoRico(): Date {
+  const parts = PR_DATE_PARTS_FORMATTER.formatToParts(new Date());
+  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return new Date(Number(map.year), Number(map.month) - 1, Number(map.day));
 }
 
 function startOfMonth(date: Date) {
@@ -146,7 +153,7 @@ export function ContactoBForm() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
-  const today = useMemo(() => startOfDay(new Date()), []);
+  const today = useMemo(() => todayInPuertoRico(), []);
   const minSelectableDate = useMemo(() => {
     const d = new Date(today);
     d.setDate(d.getDate() + 1);
@@ -190,7 +197,7 @@ export function ContactoBForm() {
           cargo: resolveCargo(values),
           carrosPorMes: values.carrosPorMes,
           fechaCita: FULL_DATE_FORMATTER.format(selectedDate),
-          horaCita: `${formatTime(selectedTime)} (AST)`,
+          horaCita: `${formatTime(selectedTime)} (hora de Puerto Rico)`,
         }),
       });
       if (!res.ok) throw new Error("request-failed");
@@ -224,7 +231,7 @@ export function ContactoBForm() {
           </span>{" "}
           a las{" "}
           <span className="text-ink font-medium">
-            {selectedTime ? `${formatTime(selectedTime)} (AST)` : ""}
+            {selectedTime ? `${formatTime(selectedTime)} (hora de Puerto Rico)` : ""}
           </span>
           . Te enviaremos la confirmación a tu correo.
         </p>
@@ -338,7 +345,7 @@ export function ContactoBForm() {
 
         {selectedDate && (
           <div>
-            <label className="form-label">Selecciona una hora (AST)</label>
+            <label className="form-label">Selecciona una hora (hora de Puerto Rico)</label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {TIME_SLOTS.map((time) => (
                 <button
