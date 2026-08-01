@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 
 type LeadPayload = {
   variante: string;
@@ -54,11 +54,30 @@ function splitNombre(nombre: string) {
   };
 }
 
+async function sendToSheets(scriptUrl: string, body: LeadPayload) {
+  const start = Date.now();
+
+  try {
+    const res = await fetch(scriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      redirect: "follow",
+    });
+
+    if (!res.ok) throw new Error(`apps-script-status-${res.status}`);
+    console.log(`Apps Script respondió en ${Date.now() - start}ms (status ${res.status})`);
+  } catch (error) {
+    console.error(`Error al guardar el lead vía Apps Script (${Date.now() - start}ms)`, error);
+  }
+}
+
 async function sendToGHL(body: LeadPayload) {
   const webhookUrl = process.env.GHL_WEBHOOK_URL;
   if (!webhookUrl) return;
 
   const { firstName, lastName } = splitNombre(body.nombre);
+  const start = Date.now();
 
   try {
     const res = await fetch(webhookUrl, {
@@ -80,8 +99,9 @@ async function sendToGHL(body: LeadPayload) {
       }),
     });
     if (!res.ok) throw new Error(`ghl-status-${res.status}`);
+    console.log(`GHL respondió en ${Date.now() - start}ms (status ${res.status})`);
   } catch (error) {
-    console.error("Error al enviar el lead a GHL", error);
+    console.error(`Error al enviar el lead a GHL (${Date.now() - start}ms)`, error);
   }
 }
 
@@ -99,23 +119,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "server-misconfigured" }, { status: 500 });
   }
 
-  const ghlPromise = sendToGHL(body);
+  // Sheets y GHL corren en segundo plano después de responder: no deben
+  // sumar latencia a lo que espera la persona en el formulario.
+  after(() => sendToSheets(scriptUrl, body));
+  after(() => sendToGHL(body));
 
-  try {
-    const res = await fetch(scriptUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      redirect: "follow",
-    });
-
-    if (!res.ok) throw new Error(`apps-script-status-${res.status}`);
-
-    await ghlPromise;
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error("Error al guardar el lead vía Apps Script", error);
-    await ghlPromise;
-    return NextResponse.json({ ok: false, error: "sheets-append-failed" }, { status: 502 });
-  }
+  return NextResponse.json({ ok: true });
 }
