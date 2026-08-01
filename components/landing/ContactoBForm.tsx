@@ -3,6 +3,12 @@
 import { useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
 type Values = {
   nombre: string;
   telefono: string;
@@ -213,6 +219,7 @@ export function ContactoBForm() {
       });
       if (!res.ok) throw new Error("request-failed");
       track("contacto_b_cita_agendada");
+      window.fbq?.("track", "Lead");
       setStep("success");
     } catch {
       setStatus("error");
