@@ -5,7 +5,7 @@ import { track } from "@vercel/analytics";
 
 declare global {
   interface Window {
-    fbq?: (...args: unknown[]) => void;
+    dataLayer?: Object[];
   }
 }
 
@@ -219,7 +219,7 @@ export function ContactoBForm() {
       });
       if (!res.ok) throw new Error("request-failed");
       track("contacto_b_cita_agendada");
-      window.fbq?.("track", "Lead");
+      window.dataLayer?.push({ event: "contacto_b_cita_agendada" });
       setStep("success");
     } catch {
       setStatus("error");
