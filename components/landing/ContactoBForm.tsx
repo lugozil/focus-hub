@@ -193,6 +193,7 @@ export function ContactoBForm() {
     setFormSubmitted(true);
     if (Object.keys(validate(values)).length > 0) return;
     track("contacto_b_formulario_completo");
+    window.dataLayer?.push({ event: "contact_b_fase1" });
     setStep("schedule");
   }
 
