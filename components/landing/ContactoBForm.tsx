@@ -71,6 +71,14 @@ function formatTime(time: string) {
   return `${h12}:${mStr} ${period}`;
 }
 
+function formatGHLDateTime(date: Date, time: string) {
+  const [hStr, mStr] = time.split(":");
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hStr}:${mStr}:00`;
+}
+
 const WEEKDAY_LABELS = ["lun", "mar", "mié", "jue", "vie", "sáb", "dom"];
 
 const PR_DATE_PARTS_FORMATTER = new Intl.DateTimeFormat("en-US", {
@@ -200,6 +208,7 @@ export function ContactoBForm() {
           carrosPorMes: values.carrosPorMes,
           fechaCita: FULL_DATE_FORMATTER.format(selectedDate),
           horaCita: `${formatTime(selectedTime)} (hora de Puerto Rico)`,
+          fechaHoraCita: formatGHLDateTime(selectedDate, selectedTime),
         }),
       });
       if (!res.ok) throw new Error("request-failed");

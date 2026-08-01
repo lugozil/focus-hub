@@ -11,6 +11,7 @@ type LeadPayload = {
   carrosPorMes?: string;
   fechaCita?: string;
   horaCita?: string;
+  fechaHoraCita?: string;
 };
 
 function isValidPayload(body: unknown): body is LeadPayload {
@@ -95,6 +96,7 @@ async function sendToGHL(body: LeadPayload) {
         inversion: body.inversion ?? "",
         fechaCita: body.fechaCita ?? "",
         horaCita: body.horaCita ?? "",
+        fechaHoraCita: body.fechaHoraCita ?? "",
         source: `focushub.one/${body.variante}`,
       }),
     });
