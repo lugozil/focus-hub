@@ -12,6 +12,7 @@ type LeadPayload = {
   fechaCita?: string;
   horaCita?: string;
   fechaHoraCita?: string;
+  agendado?: boolean;
 };
 
 function isValidPayload(body: unknown): body is LeadPayload {
@@ -97,6 +98,7 @@ async function sendToGHL(body: LeadPayload) {
         fechaCita: body.fechaCita ?? "",
         horaCita: body.horaCita ?? "",
         fechaHoraCita: body.fechaHoraCita ?? "",
+        citaAgendada: body.agendado ? "sí" : "no",
         source: `focushub.one/${body.variante}`,
       }),
     });

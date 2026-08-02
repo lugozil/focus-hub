@@ -188,12 +188,43 @@ export function ContactoBForm() {
   const errors = validate(values);
   const showErrors = formSubmitted;
 
+  function submitLead(payload: {
+    agendado: boolean;
+    fechaCita: string;
+    horaCita: string;
+    fechaHoraCita: string;
+  }) {
+    return fetch("/api/lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        variante: "contacto-b",
+        nombre: values.nombre.trim(),
+        telefono: values.telefono.trim(),
+        email: values.email.trim(),
+        dealership: values.dealership.trim(),
+        cargo: resolveCargo(values),
+        carrosPorMes: values.carrosPorMes,
+        ...payload,
+      }),
+    });
+  }
+
   function handleContinuar(e: React.FormEvent) {
     e.preventDefault();
     setFormSubmitted(true);
     if (Object.keys(validate(values)).length > 0) return;
     track("contacto_b_formulario_completo");
     window.dataLayer?.push({ event: "contact_b_fase1" });
+    // No bloqueante: el lead se guarda con placeholder de cita mientras la
+    // persona ve el calendario; si agenda, la fase 2 actualiza el mismo
+    // registro (match por email+teléfono) en vez de crear uno nuevo.
+    submitLead({
+      agendado: false,
+      fechaCita: "NO AGENDO",
+      horaCita: "NO AGENDO",
+      fechaHoraCita: "",
+    }).catch((error) => console.error("Error al guardar el lead (fase 1)", error));
     setStep("schedule");
   }
 
@@ -202,21 +233,11 @@ export function ContactoBForm() {
 
     setStatus("submitting");
     try {
-      const res = await fetch("/api/lead", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          variante: "contacto-b",
-          nombre: values.nombre.trim(),
-          telefono: values.telefono.trim(),
-          email: values.email.trim(),
-          dealership: values.dealership.trim(),
-          cargo: resolveCargo(values),
-          carrosPorMes: values.carrosPorMes,
-          fechaCita: FULL_DATE_FORMATTER.format(selectedDate),
-          horaCita: `${formatTime(selectedTime)} (hora de Puerto Rico)`,
-          fechaHoraCita: formatGHLDateTime(selectedDate, selectedTime),
-        }),
+      const res = await submitLead({
+        agendado: true,
+        fechaCita: FULL_DATE_FORMATTER.format(selectedDate),
+        horaCita: `${formatTime(selectedTime)} (hora de Puerto Rico)`,
+        fechaHoraCita: formatGHLDateTime(selectedDate, selectedTime),
       });
       if (!res.ok) throw new Error("request-failed");
       track("contacto_b_cita_agendada");
