@@ -106,8 +106,14 @@ export default function ContactoBPage() {
             </span>
 
             <h2 className="mt-4 text-xl md:text-2xl font-semibold tracking-[-0.02em] text-ink leading-[1.2]">
-              Escucha las voces de nuestros clientes
+              Escucha las voces
+              <br />
+              de nuestros clientes
             </h2>
+
+            <p className="mt-3 text-sm md:text-base text-ink-muted leading-relaxed max-w-md mx-auto">
+              Trabajar el doble sin ver un aumento en tus cierres es el indicador de que tu proceso necesita un cambio urgente. Escucha la historia de nuestro cliente y cómo logró estructurar un sistema ágil y rentable.
+            </p>
 
             <LazyVideo
               src="/Voices.mp4"
