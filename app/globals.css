@@ -224,31 +224,6 @@ html { scroll-behavior: smooth; }
   color: #dc2626;
 }
 
-/* ---------- Layout contacto-b (orden distinto en móvil vs escritorio) ---------- */
-.contacto-b-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  grid-template-areas:
-    "eyebrow"
-    "title"
-    "paragraph"
-    "video"
-    "form";
-}
-
-@media (min-width: 768px) {
-  .contacto-b-grid {
-    grid-template-columns: 1fr 1fr;
-    column-gap: 3.5rem;
-    row-gap: 1.5rem;
-    grid-template-areas:
-      "eyebrow ."
-      "title paragraph"
-      "video form";
-  }
-}
-
 /* ---------- Slider de la calculadora (contacto-c) ---------- */
 .range-slider {
   -webkit-appearance: none;

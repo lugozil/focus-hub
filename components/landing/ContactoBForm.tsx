@@ -526,7 +526,7 @@ export function ContactoBForm() {
         type="submit"
         className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium px-6 py-3.5 hover:bg-ink-soft transition-colors"
       >
-        Continuar
+        Agendar mi auditoría
       </button>
     </form>
   );
