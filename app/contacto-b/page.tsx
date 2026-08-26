@@ -47,7 +47,7 @@ export default function ContactoBPage() {
             <div className="mesh-fade" />
           </div>
 
-          <div className="relative mx-auto max-w-xl px-6 pt-10 pb-14 md:pt-16 md:pb-20 text-center animate-fade-up">
+          <div className="relative mx-auto max-w-xl px-6 pt-10 pb-8 md:pt-16 md:pb-12 text-center animate-fade-up">
             <span className="eyebrow-pill">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
@@ -91,7 +91,7 @@ export default function ContactoBPage() {
 
         {/* ---------- TESTIMONIO ---------- */}
         <section className="relative">
-          <div className="mx-auto max-w-xl px-6 py-14 md:py-20 text-center">
+          <div className="mx-auto max-w-xl px-6 pt-8 pb-14 md:pt-12 md:pb-20 text-center">
             <span className="eyebrow-pill">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
