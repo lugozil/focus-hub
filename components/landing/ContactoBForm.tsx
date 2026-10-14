@@ -17,6 +17,27 @@ type Values = {
   cargo: string;
   cargoOtro: string;
   carrosPorMes: string;
+  servicios: string[];
+};
+
+type ContactoBFormProps = {
+  variante?: string;
+  /** Si se pasa, se muestra la pregunta de servicios de interés (multiselección, obligatoria). */
+  serviceOptions?: string[];
+  /** Nombres de eventos para Vercel Analytics y el dataLayer (GTM). */
+  events?: {
+    formularioCompleto: string;
+    fase1: string;
+    citaAgendada: string;
+  };
+  appointmentLabel?: string;
+  submitLabel?: string;
+};
+
+const CONTACTO_B_EVENTS = {
+  formularioCompleto: "contacto_b_formulario_completo",
+  fase1: "contact_b_fase1",
+  citaAgendada: "contacto_b_cita_agendada",
 };
 
 type Step = "form" | "schedule" | "success";
@@ -39,11 +60,12 @@ const INITIAL_VALUES: Values = {
   cargo: "",
   cargoOtro: "",
   carrosPorMes: "",
+  servicios: [],
 };
 
 type Errors = Partial<Record<keyof Values, string>>;
 
-function validate(values: Values): Errors {
+function validate(values: Values, requireServicios: boolean): Errors {
   const errors: Errors = {};
 
   if (values.nombre.trim().length < 2) errors.nombre = "Ingresa tu nombre completo.";
@@ -55,6 +77,9 @@ function validate(values: Values): Errors {
     errors.cargoOtro = "Escribe tu cargo.";
   }
   if (!values.carrosPorMes) errors.carrosPorMes = "Selecciona una opción.";
+  if (requireServicios && values.servicios.length === 0) {
+    errors.servicios = "Selecciona al menos un servicio.";
+  }
 
   return errors;
 }
@@ -160,7 +185,14 @@ function optionButtonClass(active: boolean) {
   ].join(" ");
 }
 
-export function ContactoBForm() {
+export function ContactoBForm({
+  variante = "contacto-b",
+  serviceOptions,
+  events = CONTACTO_B_EVENTS,
+  appointmentLabel = "tu auditoría gratuita",
+  submitLabel = "Agendar mi auditoría",
+}: ContactoBFormProps = {}) {
+  const requireServicios = Boolean(serviceOptions?.length);
   const [values, setValues] = useState<Values>(INITIAL_VALUES);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [step, setStep] = useState<Step>("form");
@@ -185,7 +217,15 @@ export function ContactoBForm() {
   const update = (patch: Partial<Values>) =>
     setValues((prev) => ({ ...prev, ...patch }));
 
-  const errors = validate(values);
+  const errors = validate(values, requireServicios);
+
+  const toggleServicio = (servicio: string) =>
+    setValues((prev) => ({
+      ...prev,
+      servicios: prev.servicios.includes(servicio)
+        ? prev.servicios.filter((s) => s !== servicio)
+        : [...prev.servicios, servicio],
+    }));
   const showErrors = formSubmitted;
 
   function submitLead(payload: {
@@ -198,13 +238,14 @@ export function ContactoBForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        variante: "contacto-b",
+        variante,
         nombre: values.nombre.trim(),
         telefono: values.telefono.trim(),
         email: values.email.trim(),
         dealership: values.dealership.trim(),
         cargo: resolveCargo(values),
         carrosPorMes: values.carrosPorMes,
+        ...(requireServicios && { servicios: values.servicios.join(", ") }),
         ...payload,
       }),
     });
@@ -213,9 +254,9 @@ export function ContactoBForm() {
   function handleContinuar(e: React.FormEvent) {
     e.preventDefault();
     setFormSubmitted(true);
-    if (Object.keys(validate(values)).length > 0) return;
-    track("contacto_b_formulario_completo");
-    window.dataLayer?.push({ event: "contact_b_fase1" });
+    if (Object.keys(validate(values, requireServicios)).length > 0) return;
+    track(events.formularioCompleto);
+    window.dataLayer?.push({ event: events.fase1 });
     // No bloqueante: el lead se guarda con placeholder de cita mientras la
     // persona ve el calendario; si agenda, la fase 2 actualiza el mismo
     // registro (match por email+teléfono) en vez de crear uno nuevo.
@@ -240,8 +281,8 @@ export function ContactoBForm() {
         fechaHoraCita: formatGHLDateTime(selectedDate, selectedTime),
       });
       if (!res.ok) throw new Error("request-failed");
-      track("contacto_b_cita_agendada");
-      window.dataLayer?.push({ event: "contacto_b_cita_agendada" });
+      track(events.citaAgendada);
+      window.dataLayer?.push({ event: events.citaAgendada });
       setStep("success");
     } catch {
       setStatus("error");
@@ -303,7 +344,7 @@ export function ContactoBForm() {
         <div>
           <h2 className="text-lg font-semibold text-ink">Agenda tu cita</h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Selecciona el día y la hora que prefieras para tu auditoría gratuita.
+            Selecciona el día y la hora que prefieras para {appointmentLabel}.
           </p>
         </div>
 
@@ -522,11 +563,50 @@ export function ContactoBForm() {
         {showErrors && errors.carrosPorMes && <p className="form-error">{errors.carrosPorMes}</p>}
       </div>
 
+      {serviceOptions && serviceOptions.length > 0 && (
+        <fieldset>
+          <legend className="form-label">
+            ¿Qué servicios te interesan?{" "}
+            <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
+          </legend>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {serviceOptions.map((servicio) => {
+              const active = values.servicios.includes(servicio);
+              return (
+                <button
+                  key={servicio}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={active}
+                  onClick={() => toggleServicio(servicio)}
+                  className={`${optionButtonClass(active)} flex items-center gap-2 text-left`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      active ? "border-white bg-white text-ink" : "border-silver-400"
+                    }`}
+                  >
+                    {active && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  {servicio}
+                </button>
+              );
+            })}
+          </div>
+          {showErrors && errors.servicios && <p className="form-error">{errors.servicios}</p>}
+        </fieldset>
+      )}
+
       <button
         type="submit"
         className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium px-6 py-3.5 hover:bg-ink-soft transition-colors"
       >
-        Agendar mi auditoría
+        {submitLabel}
       </button>
     </form>
   );

@@ -1,6 +1,6 @@
 import { NextResponse, after } from "next/server";
 
-const ALLOWED_VARIANTES = new Set(["contacto", "contacto-a", "contacto-b", "contacto-c"]);
+const ALLOWED_VARIANTES = new Set(["contacto", "contacto-a", "contacto-b", "contacto-c", "studio"]);
 
 async function sendPageview(scriptUrl: string, secret: string, variante: string) {
   const url = new URL(scriptUrl);

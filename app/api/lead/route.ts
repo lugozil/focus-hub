@@ -9,6 +9,7 @@ type LeadPayload = {
   inversion?: string;
   dealership?: string;
   carrosPorMes?: string;
+  servicios?: string;
   fechaCita?: string;
   horaCita?: string;
   fechaHoraCita?: string;
@@ -32,8 +33,11 @@ function isValidPayload(body: unknown): body is LeadPayload {
 
   if (!hasBaseFields) return false;
 
-  if (b.variante === "contacto-b") {
+  if (b.variante === "contacto-b" || b.variante === "studio") {
+    const hasServicios =
+      b.variante !== "studio" || (typeof b.servicios === "string" && b.servicios.trim().length > 0);
     return (
+      hasServicios &&
       typeof b.dealership === "string" &&
       b.dealership.trim().length > 0 &&
       typeof b.carrosPorMes === "string" &&
@@ -94,6 +98,7 @@ async function sendToGHL(body: LeadPayload) {
         variante: body.variante,
         dealership: body.dealership ?? "",
         carrosPorMes: body.carrosPorMes ?? "",
+        servicios: body.servicios ?? "",
         inversion: body.inversion ?? "",
         fechaCita: body.fechaCita ?? "",
         horaCita: body.horaCita ?? "",
