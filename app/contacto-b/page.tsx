@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { ContactoBForm } from "@/components/landing/ContactoBForm";
-import { LazyVideo } from "@/components/landing/LazyVideo";
+import { TestimonialSlider } from "@/components/landing/TestimonialSlider";
 import { PageviewTracker } from "@/components/landing/PageviewTracker";
 
 export const metadata: Metadata = {
@@ -71,6 +71,10 @@ export default function ContactoBPage() {
               Descubre en 60 segundos dónde estás dejando ventas sobre la mesa.
             </p>
 
+            <p className="mt-2 text-xs md:text-[13px] font-medium text-ink-faint">
+              Exclusivo para dueños y gerentes de dealers.
+            </p>
+
             <div className="mt-6 mx-auto aspect-video w-full max-w-[420px] md:max-w-full rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
               <video
                 src="/VSL.mp4"
@@ -112,12 +116,15 @@ export default function ContactoBPage() {
             </h2>
 
             <p className="mt-3 text-sm md:text-base text-ink-muted leading-relaxed max-w-md mx-auto">
-              Trabajar el doble sin ver un aumento en tus cierres es el indicador de que tu proceso necesita un cambio urgente. Escucha la historia de nuestro cliente y cómo logró estructurar un sistema ágil y rentable.
+              Trabajar el doble sin ver un aumento en tus cierres es el indicador de que tu proceso necesita un cambio urgente. Escucha las historias de nuestros clientes y cómo lograron estructurar un sistema ágil y rentable.
             </p>
 
-            <LazyVideo
-              src="/Voices.mp4"
-              className="mt-6 mx-auto aspect-video w-full max-w-[420px] md:max-w-full rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black"
+            <TestimonialSlider
+              className="mt-6"
+              videos={[
+                { src: "/Voices.mp4" },
+                { src: "/testimonio-hdelgado.mp4", label: "Testimonio de H. Delgado" },
+              ]}
             />
 
             <div className="mt-6">
@@ -129,6 +136,18 @@ export default function ContactoBPage() {
         {/* ---------- FORMULARIO ---------- */}
         <section className="relative">
           <div id="formulario" className="mx-auto max-w-md px-6 pb-14 md:pb-20">
+            <div
+              role="note"
+              className="mb-4 flex items-start gap-3 rounded-xl border border-silver-300 bg-silver-50 px-4 py-3 text-left text-[13px] md:text-sm leading-relaxed text-ink-muted"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="mt-0.5 shrink-0 text-ink">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M12 11v5M12 8h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+              <p>
+                <span className="font-semibold text-ink">Importante:</span> este formulario es solo para dueños o gerentes de dealers. Si eres vendedor independiente, por favor no lo llenes.
+              </p>
+            </div>
             <ContactoBForm />
           </div>
         </section>
