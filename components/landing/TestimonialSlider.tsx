@@ -79,22 +79,11 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
         </p>
       )}
 
-      <div className="mx-auto flex w-full max-w-[480px] md:max-w-full items-center gap-2 md:gap-3">
-        {hasMany && (
-          <button
-            type="button"
-            onClick={() => goTo(active - 1)}
-            disabled={active === 0}
-            aria-label="Testimonio anterior"
-            className={arrowClass}
-          >
-            <Arrow direction="left" />
-          </button>
-        )}
-
+      {/* Mismo ancho que el VSL del hero */}
+      <div className="mx-auto w-full max-w-[420px] md:max-w-full">
         <div
           ref={trackRef}
-          className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-roledescription="carrusel"
         >
           {videos.map((video, i) => (
@@ -111,8 +100,35 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
             </div>
           ))}
         </div>
+      </div>
 
-        {hasMany && (
+      {hasMany && (
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => goTo(active - 1)}
+            disabled={active === 0}
+            aria-label="Testimonio anterior"
+            className={arrowClass}
+          >
+            <Arrow direction="left" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            {videos.map((video, i) => (
+              <button
+                key={video.src}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Ver testimonio ${i + 1}`}
+                aria-current={i === active}
+                className={`h-2 rounded-full transition-all ${
+                  i === active ? "w-6 bg-ink" : "w-2 bg-silver-300 hover:bg-ink-faint"
+                }`}
+              />
+            ))}
+          </div>
+
           <button
             type="button"
             onClick={() => goTo(active + 1)}
@@ -122,23 +138,6 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
           >
             <Arrow direction="right" />
           </button>
-        )}
-      </div>
-
-      {hasMany && (
-        <div className="mt-4 flex items-center justify-center gap-2">
-          {videos.map((video, i) => (
-            <button
-              key={video.src}
-              type="button"
-              onClick={() => goTo(i)}
-              aria-label={`Ver testimonio ${i + 1}`}
-              aria-current={i === active}
-              className={`h-2 rounded-full transition-all ${
-                i === active ? "w-6 bg-ink" : "w-2 bg-silver-300 hover:bg-ink-faint"
-              }`}
-            />
-          ))}
         </div>
       )}
     </div>
