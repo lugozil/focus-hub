@@ -65,15 +65,36 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
     el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" });
   };
 
+  const hasMany = videos.length > 1;
+
   const arrowClass =
-    "absolute top-1/2 -translate-y-1/2 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-ink shadow-md border border-silver-200 hover:bg-white transition-opacity disabled:opacity-0 disabled:pointer-events-none";
+    "flex h-8 w-8 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-full bg-white text-ink shadow-md border border-silver-200 hover:bg-silver-50 transition-opacity disabled:opacity-30 disabled:cursor-default disabled:hover:bg-white";
 
   return (
     <div className={className}>
-      <div className="relative mx-auto w-full max-w-[420px] md:max-w-full">
+      {hasMany && (
+        <p className="mb-3 flex items-center justify-center gap-1.5 text-xs md:text-[13px] font-medium text-ink-faint">
+          Desliza para ver más testimonios
+          <Arrow direction="right" />
+        </p>
+      )}
+
+      <div className="mx-auto flex w-full max-w-[480px] md:max-w-full items-center gap-2 md:gap-3">
+        {hasMany && (
+          <button
+            type="button"
+            onClick={() => goTo(active - 1)}
+            disabled={active === 0}
+            aria-label="Testimonio anterior"
+            className={arrowClass}
+          >
+            <Arrow direction="left" />
+          </button>
+        )}
+
         <div
           ref={trackRef}
-          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-roledescription="carrusel"
         >
           {videos.map((video, i) => (
@@ -91,31 +112,20 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
           ))}
         </div>
 
-        {videos.length > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => goTo(active - 1)}
-              disabled={active === 0}
-              aria-label="Testimonio anterior"
-              className={`${arrowClass} left-2`}
-            >
-              <Arrow direction="left" />
-            </button>
-            <button
-              type="button"
-              onClick={() => goTo(active + 1)}
-              disabled={active === videos.length - 1}
-              aria-label="Siguiente testimonio"
-              className={`${arrowClass} right-2`}
-            >
-              <Arrow direction="right" />
-            </button>
-          </>
+        {hasMany && (
+          <button
+            type="button"
+            onClick={() => goTo(active + 1)}
+            disabled={active === videos.length - 1}
+            aria-label="Siguiente testimonio"
+            className={arrowClass}
+          >
+            <Arrow direction="right" />
+          </button>
         )}
       </div>
 
-      {videos.length > 1 && (
+      {hasMany && (
         <div className="mt-4 flex items-center justify-center gap-2">
           {videos.map((video, i) => (
             <button
