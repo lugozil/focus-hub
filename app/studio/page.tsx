@@ -117,11 +117,11 @@ export default function StudioPage() {
               </div>
             </div>
 
-            {/* Imagen temporal: reemplazar public/studio-hero.jpg por la foto definitiva */}
+            {/* Imagen temporal: reemplazar public/studio-hero-v2.jpg por la foto definitiva */}
             <div className="relative mx-auto w-full max-w-[520px] md:max-w-none animate-fade-up">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-silver-200 bg-silver-100 shadow-xl">
                 <Image
-                  src="/studio-hero.jpg"
+                  src="/studio-hero-v2.jpg"
                   alt="Producción de contenido de FOCUS Hub Studio"
                   fill
                   priority
