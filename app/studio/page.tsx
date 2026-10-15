@@ -117,12 +117,12 @@ export default function StudioPage() {
               </div>
             </div>
 
-            {/* Imagen temporal: reemplazar public/studio-hero-v2.jpg por la foto definitiva */}
+            {/* Hero: videógrafo de FOCUS Hub Studio filmando un SUV frente al dealer */}
             <div className="relative mx-auto w-full max-w-[520px] md:max-w-none animate-fade-up">
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-silver-200 bg-silver-100 shadow-xl">
                 <Image
-                  src="/studio-hero-v2.jpg"
-                  alt="Producción de contenido de FOCUS Hub Studio"
+                  src="/studio-hero-v3.jpg"
+                  alt="Videógrafo de FOCUS Hub Studio filmando un SUV frente a un dealer"
                   fill
                   priority
                   sizes="(min-width: 768px) 50vw, 100vw"
