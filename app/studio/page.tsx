@@ -100,12 +100,15 @@ export default function StudioPage() {
               <h1 className="mt-4 text-[26px] sm:text-3xl lg:text-[40px] font-semibold tracking-[-0.025em] text-ink leading-[1.12] text-balance">
                 No necesitas más contenido.{" "}
                 <span className="block mt-1 text-ink-muted">
-                  Necesitas contenido que marque la diferencia.
+                  Necesitas contenido que{" "}
+                  <span className="text-ink box-decoration-clone px-1 -mx-1 rounded-md bg-[linear-gradient(transparent_58%,var(--color-silver-300)_58%)]">
+                    marque la diferencia.
+                  </span>
                 </span>
               </h1>
 
               <p className="mt-4 text-[15px] md:text-base text-ink-muted leading-relaxed max-w-md mx-auto md:mx-0">
-                Creamos videos y piezas publicitarias con dirección creativa, narrativa visual y una ejecución profesional para que tu marca destaque en un entorno digital cada vez más competitivo.
+                Creamos videos y piezas publicitarias con dirección creativa y ejecución profesional para que tu marca destaque.
               </p>
 
               <p className="mt-3 text-xs md:text-[13px] font-medium text-ink-faint">
