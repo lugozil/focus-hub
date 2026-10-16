@@ -22,7 +22,7 @@ type Values = {
 
 type ContactoBFormProps = {
   variante?: string;
-  /** Si se pasa, se muestra la pregunta de servicios de interés (multiselección, obligatoria). */
+  /** Si se pasa, se muestra la pregunta de servicio de interés (select, obligatoria). */
   serviceOptions?: string[];
   /** Nombres de eventos para Vercel Analytics y el dataLayer (GTM). */
   events?: {
@@ -78,7 +78,7 @@ function validate(values: Values, requireServicios: boolean): Errors {
   }
   if (!values.carrosPorMes) errors.carrosPorMes = "Selecciona una opción.";
   if (requireServicios && values.servicios.length === 0) {
-    errors.servicios = "Selecciona al menos un servicio.";
+    errors.servicios = "Selecciona un servicio.";
   }
 
   return errors;
@@ -219,13 +219,6 @@ export function ContactoBForm({
 
   const errors = validate(values, requireServicios);
 
-  const toggleServicio = (servicio: string) =>
-    setValues((prev) => ({
-      ...prev,
-      servicios: prev.servicios.includes(servicio)
-        ? prev.servicios.filter((s) => s !== servicio)
-        : [...prev.servicios, servicio],
-    }));
   const showErrors = formSubmitted;
 
   function submitLead(payload: {
@@ -564,42 +557,21 @@ export function ContactoBForm({
       </div>
 
       {serviceOptions && serviceOptions.length > 0 && (
-        <fieldset>
-          <legend className="form-label">
-            ¿Qué servicios te interesan?{" "}
-            <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
-          </legend>
-          <div className="grid grid-cols-3 gap-2">
-            {serviceOptions.map((servicio) => {
-              const active = values.servicios.includes(servicio);
-              return (
-                <button
-                  key={servicio}
-                  type="button"
-                  role="checkbox"
-                  aria-checked={active}
-                  onClick={() => toggleServicio(servicio)}
-                  className={`${optionButtonClass(active)} flex flex-col items-center justify-center gap-2 leading-snug`}
-                >
-                  <span
-                    aria-hidden="true"
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                      active ? "border-white bg-white text-ink" : "border-silver-400"
-                    }`}
-                  >
-                    {active && (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
-                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </span>
-                  {servicio}
-                </button>
-              );
-            })}
-          </div>
+        <div>
+          <label className="form-label" htmlFor="servicio">¿Qué servicio te interesa?</label>
+          <select
+            id="servicio"
+            value={values.servicios[0] ?? ""}
+            onChange={(e) => update({ servicios: [e.target.value] })}
+            className={`form-control ${showErrors && errors.servicios ? "has-error" : ""}`}
+          >
+            <option value="" disabled>Selecciona una opción</option>
+            {serviceOptions.map((option) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
           {showErrors && errors.servicios && <p className="form-error">{errors.servicios}</p>}
-        </fieldset>
+        </div>
       )}
 
       <button
