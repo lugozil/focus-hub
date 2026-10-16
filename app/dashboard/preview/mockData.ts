@@ -162,10 +162,9 @@ export const VIDEOS: { landing: LandingKey; titulo: string; playRate: number; re
 ];
 
 export const SERVICIOS_STUDIO: { servicio: string; share: number }[] = [
-  { servicio: "Producción cinematográfica", share: 0.64 },
-  { servicio: "Contenido publicitario", share: 0.58 },
-  { servicio: "Contenido orgánico", share: 0.47 },
-  { servicio: "Gestión de redes sociales", share: 0.39 },
+  { servicio: "Producciones audiovisuales", share: 0.64 },
+  { servicio: "Creación completa de contenido", share: 0.52 },
+  { servicio: "Planificación de contenido", share: 0.41 },
 ];
 
 export const FUENTES: { fuente: string; share: number }[] = [
@@ -189,10 +188,10 @@ export type LeadRow = {
 
 export const LEADS_RECIENTES: LeadRow[] = [
   { fecha: "14 oct · 9:42 a.m.", nombre: "Carlos M.", dealership: "Auto Group Norte", cargo: "Dueño / CEO", landing: "performance", estado: "Cita agendada", cita: "16 oct · 10:00 a.m." },
-  { fecha: "14 oct · 8:15 a.m.", nombre: "Lourdes R.", dealership: "Bayamón Motors", cargo: "Gerente General", landing: "studio", servicios: "Cinematográfica, Publicitario", estado: "Cita agendada", cita: "15 oct · 2:30 p.m." },
+  { fecha: "14 oct · 8:15 a.m.", nombre: "Lourdes R.", dealership: "Bayamón Motors", cargo: "Gerente General", landing: "studio", servicios: "Audiovisuales, Creación completa", estado: "Cita agendada", cita: "15 oct · 2:30 p.m." },
   { fecha: "13 oct · 7:58 p.m.", nombre: "José A.", dealership: "Caguas Auto Plaza", cargo: "Director de Ventas", landing: "performance", estado: "No agendó" },
   { fecha: "13 oct · 4:20 p.m.", nombre: "Ana V.", dealership: "Ponce Car Center", cargo: "Gerente General", landing: "performance", estado: "Cita agendada", cita: "15 oct · 9:30 a.m." },
-  { fecha: "13 oct · 11:05 a.m.", nombre: "Ricardo P.", dealership: "Mayagüez Autos", cargo: "Dueño / CEO", landing: "studio", servicios: "Redes sociales", estado: "No agendó" },
-  { fecha: "12 oct · 6:47 p.m.", nombre: "Marisol T.", dealership: "Arecibo Motors", cargo: "Directora de Marketing", landing: "studio", servicios: "Orgánico, Redes sociales", estado: "Cita agendada", cita: "14 oct · 3:00 p.m." },
+  { fecha: "13 oct · 11:05 a.m.", nombre: "Ricardo P.", dealership: "Mayagüez Autos", cargo: "Dueño / CEO", landing: "studio", servicios: "Planificación", estado: "No agendó" },
+  { fecha: "12 oct · 6:47 p.m.", nombre: "Marisol T.", dealership: "Arecibo Motors", cargo: "Directora de Marketing", landing: "studio", servicios: "Planificación, Audiovisuales", estado: "Cita agendada", cita: "14 oct · 3:00 p.m." },
   { fecha: "12 oct · 10:31 a.m.", nombre: "Héctor L.", dealership: "Carolina Auto Mall", cargo: "Gerente General", landing: "performance", estado: "Cita agendada", cita: "14 oct · 11:30 a.m." },
 ];

@@ -6,11 +6,13 @@ import {
   BLUE_RAMP,
   BarList,
   ColumnSteps,
-  Funnel,
+  DropoffColumns,
+  FlowFunnel,
   GOOD,
+  GroupedColumns,
   Heatmap,
   NUM,
-  Sparkline,
+  RankedPills,
   SplitBar,
   TrendChart,
   pct,
@@ -126,15 +128,28 @@ function Segmented<T extends string | number>({
   );
 }
 
-function Delta({ current, previous }: { current: number; previous: number }) {
-  if (previous <= 0) return <span className="text-[11px] text-ink-faint">sin período previo</span>;
+/** Un color por paso del recorrido; se repite en las tarjetas y en el embudo. */
+const STEP_THEMES = [
+  { color: "#2a78d6", tint: "#eaf2fd", icon: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zm10 3a3 3 0 100-6 3 3 0 000 6z" },
+  { color: "#5b5bd6", tint: "#efeffc", icon: "M12 4v16m0 0l-6-6m6 6l6-6" },
+  { color: "#8e4ec6", tint: "#f5eefb", icon: "M9 9l10 4-4 2-2 4-4-10zM5 3v3M3 5h3M5 13H3m10-8V3" },
+  { color: "#eb6834", tint: "#fdf0ea", icon: "M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4" },
+  { color: "#d4900a", tint: "#fdf6e3", icon: "M9 12l2 2 4-4M5 4h14v16H5z" },
+  { color: "#0d8a5a", tint: "#e7f6ef", icon: "M7 3v3m10-3v3M4 8h16M5 5h14v15H5zM9 14l2 2 4-4" },
+];
+
+/** Las tarjetas comparten un solo color; el embudo conserva los colores por paso. */
+const KPI_COLOR = { color: "#2a78d6", tint: "#eef4fc" };
+
+function Delta({ current, previous, compareLabel }: { current: number; previous: number; compareLabel: string }) {
+  if (previous <= 0) return <span className="text-[12px] text-ink-faint">sin período previo</span>;
   const change = (current - previous) / previous;
   const up = change >= 0;
   return (
-    <span className="flex flex-wrap items-center gap-x-1.5 text-[11px]">
+    <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px]">
       <span
-        className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 font-semibold"
-        style={{ color: up ? GOOD : BAD, backgroundColor: up ? "#e7f6ef" : "#fdeeee" }}
+        className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 font-bold shadow-sm"
+        style={{ color: up ? GOOD : BAD }}
       >
         <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true">
           <path d={up ? "M5 1L9 7H1z" : "M5 9L1 3h8z"} fill="currentColor" />
@@ -142,43 +157,46 @@ function Delta({ current, previous }: { current: number; previous: number }) {
         {up ? "+" : "−"}
         {Math.abs(change * 100).toFixed(1)}%
       </span>
-      <span className="text-ink-faint">vs. anterior</span>
+      <span className="text-ink-muted">{compareLabel}</span>
     </span>
   );
 }
 
 function KpiTile({
-  step,
   label,
   value,
   previous,
   rate,
-  spark,
-  color,
+  theme,
+  compareLabel,
 }: {
-  step: number;
   label: string;
   value: number;
   previous: number;
   rate?: string;
-  spark: number[];
-  color: string;
+  theme: (typeof STEP_THEMES)[number];
+  compareLabel: string;
 }) {
   return (
-    <div className="flex flex-col rounded-2xl border border-silver-200 bg-white p-4">
+    <div
+      className="relative flex flex-col overflow-hidden rounded-2xl border p-4 transition-transform duration-200 hover:-translate-y-0.5 sm:p-5"
+      style={{ backgroundColor: theme.tint, borderColor: `${theme.color}33` }}
+    >
+      <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundColor: theme.color }} />
       <div className="flex items-center gap-2">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold text-white" style={{ backgroundColor: color }}>
-          {step}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-white" style={{ backgroundColor: theme.color }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d={theme.icon} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </span>
-        <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{label}</p>
+        <p className="line-clamp-2 text-[13px] font-semibold leading-[1.15] text-ink sm:text-[14px]">{label}</p>
       </div>
-      <p className="mt-2 text-[26px] font-semibold leading-none tabular-nums text-ink">{NUM.format(value)}</p>
-      <p className="mt-1 min-h-[16px] text-[11px] text-ink-muted">{rate}</p>
-      <div className="mt-2">
-        <Sparkline values={spark} color={color} />
-      </div>
-      <div className="mt-2">
-        <Delta current={value} previous={previous} />
+      <p className="mt-3 text-[34px] font-bold leading-none tracking-[-0.02em] tabular-nums" style={{ color: theme.color }}>
+        {NUM.format(value)}
+      </p>
+      <p className="mt-1.5 min-h-[16px] text-[12px] text-ink-muted">{rate}</p>
+      <div className="mt-auto pt-3">
+        <Delta current={value} previous={previous} compareLabel={compareLabel} />
       </div>
     </div>
   );
@@ -230,12 +248,12 @@ export function DashboardPreview() {
   const { totals, prev, perLanding, daily } = data;
 
   const stages: FunnelStage[] = [
-    { key: "visitas", label: "Visitan la landing", hint: "Sesiones únicas", value: totals.visitas },
-    { key: "scroll50", label: "Hacen scroll (50%+)", hint: "Llegan a la mitad de la página", value: totals.scroll50 },
-    { key: "ctaClicks", label: "Pulsan un botón CTA", hint: "Cualquier botón hacia el formulario", value: totals.ctaClicks },
-    { key: "formInicio", label: "Interactúan con el formulario", hint: "Tocan al menos un campo", value: totals.formInicio },
-    { key: "formCompleto", label: "Completan el formulario", hint: "Fase 1 enviada", value: totals.formCompleto },
-    { key: "citas", label: "Agendan una cita", hint: "Fase 2: calendario", value: totals.citas },
+    { key: "visitas", label: "Visitan la landing", hint: "Sesiones únicas", value: totals.visitas, color: STEP_THEMES[0].color },
+    { key: "scroll50", label: "Bajan a la mitad", hint: "Hacen scroll al 50% o más", value: totals.scroll50, color: STEP_THEMES[1].color },
+    { key: "ctaClicks", label: "Pulsan un botón", hint: "Cualquier botón CTA hacia el formulario", value: totals.ctaClicks, color: STEP_THEMES[2].color },
+    { key: "formInicio", label: "Empiezan el form", hint: "Tocan al menos un campo", value: totals.formInicio, color: STEP_THEMES[3].color },
+    { key: "formCompleto", label: "Envían el form", hint: "Fase 1 enviada", value: totals.formCompleto, color: STEP_THEMES[4].color },
+    { key: "citas", label: "Agendan cita", hint: "Fase 2: calendario", value: totals.citas, color: STEP_THEMES[5].color },
   ];
 
   const kpis: { key: MetricKey; label: string; rate?: string }[] = [
@@ -346,13 +364,12 @@ export function DashboardPreview() {
           {kpis.map((k, i) => (
             <KpiTile
               key={k.key}
-              step={i + 1}
               label={k.label}
               value={totals[k.key]}
               previous={prev[k.key]}
               rate={k.rate}
-              spark={daily(k.key)}
-              color={BLUE_RAMP[i]}
+              theme={{ ...STEP_THEMES[i], ...KPI_COLOR }}
+              compareLabel={`vs. ${range} días anteriores`}
             />
           ))}
         </div>
@@ -369,42 +386,42 @@ export function DashboardPreview() {
               </div>
             }
           >
-            <Funnel stages={stages} />
+            <FlowFunnel stages={stages} />
           </Card>
 
-          <Card title="Performance vs. Studio" subtitle="Tasa de cada paso sobre las visitas">
-            <div className="mb-4 flex gap-4">
+          <Card title="Performance vs. Studio" subtitle="% que avanza de cada paso al siguiente">
+            <div className="mb-5 grid grid-cols-2 gap-2">
               {LANDINGS.map((l) => (
-                <div key={l.key} className="flex items-center gap-1.5 text-[12px] text-ink-muted">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: l.color }} />
-                  {l.label}
+                <div key={l.key} className="rounded-xl px-3 py-2" style={{ backgroundColor: `${l.color}14` }}>
+                  <p className="flex items-center gap-1.5 text-[12px] font-semibold text-ink">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: l.color }} />
+                    {l.label}
+                  </p>
+                  <p className="mt-0.5 text-[20px] font-bold leading-none tabular-nums" style={{ color: l.color }}>
+                    {pct(perLanding[l.key].citas, perLanding[l.key].visitas, 2)}
+                  </p>
+                  <p className="mt-0.5 text-[10px] text-ink-faint">conversión total a cita</p>
                 </div>
               ))}
             </div>
-            <div className="space-y-4">
-              {stages.slice(1).map((s) => {
-                const rates = LANDINGS.map((l) => {
-                  const t = perLanding[l.key];
-                  return { ...l, rate: t.visitas ? t[s.key as MetricKey] / t.visitas : 0 };
-                });
-                const max = Math.max(0.0001, ...rates.map((r) => r.rate));
-                return (
-                  <div key={s.key}>
-                    <p className="mb-1.5 text-[12px] font-medium text-ink">{s.label}</p>
-                    <div className="space-y-1">
-                      {rates.map((r) => (
-                        <div key={r.key} className="flex items-center gap-2">
-                          <div className="h-2.5 flex-1 rounded-full bg-silver-100">
-                            <div className="h-full rounded-full transition-[width] duration-700" style={{ width: `${(r.rate / max) * 100}%`, backgroundColor: r.color }} />
-                          </div>
-                          <span className="w-12 text-right text-[12px] font-semibold tabular-nums text-ink">{(r.rate * 100).toFixed(1)}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
+            <GroupedColumns
+              series={LANDINGS}
+              groups={stages.slice(1).map((s, i) => {
+                const from = stages[i].key as MetricKey;
+                const to = s.key as MetricKey;
+                return {
+                  label: s.label,
+                  values: LANDINGS.map((l) => {
+                    const t = perLanding[l.key];
+                    return t[from] ? t[to] / t[from] : 0;
+                  }),
+                  detail: LANDINGS.map((l) => {
+                    const t = perLanding[l.key];
+                    return `${NUM.format(t[to])} de ${NUM.format(t[from])}`;
+                  }),
+                };
               })}
-            </div>
+            />
           </Card>
         </div>
 
@@ -456,7 +473,7 @@ export function DashboardPreview() {
         {/* ---------- Botones + abandono ---------- */}
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <Card title="Clics por botón" subtitle={`${NUM.format(totals.ctaClicks)} clics en total`}>
-            <BarList items={ctaItems} color={BLUE_RAMP[4]} total={totals.ctaClicks} />
+            <RankedPills items={ctaItems} color={BLUE_RAMP[4]} total={totals.ctaClicks} />
           </Card>
           <Card
             title="¿Dónde abandonan el formulario?"
@@ -468,7 +485,7 @@ export function DashboardPreview() {
               </div>
             }
           >
-            <BarList items={dropoff} color="#eb6834" total={abandonos} />
+            <DropoffColumns items={dropoff} total={abandonos} />
           </Card>
         </div>
 

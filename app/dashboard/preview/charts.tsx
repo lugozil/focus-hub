@@ -45,94 +45,216 @@ export function Tooltip({
 }
 
 /* ------------------------------------------------------------------ */
-/* Sparkline                                                           */
+/* Embudo de flujo (recorrido del visitante)                           */
 /* ------------------------------------------------------------------ */
 
-export function Sparkline({ values, color }: { values: number[]; color: string }) {
-  const w = 120;
-  const h = 32;
-  const max = Math.max(1, ...values);
-  const min = Math.min(...values);
-  const span = Math.max(1, max - min);
-  const pts = values.map((v, i) => [
-    values.length <= 1 ? 0 : (i / (values.length - 1)) * w,
-    h - 3 - ((v - min) / span) * (h - 6),
-  ]);
-  const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
-  const area = `${line} L${w},${h} L0,${h} Z`;
-  const last = pts[pts.length - 1];
+export type FunnelStage = { key: string; label: string; hint: string; value: number; color: string };
+
+/**
+ * Embudo horizontal: cada paso es una columna centrada cuya altura es
+ * proporcional a las personas que llegan a él; la banda entre columnas
+ * muestra cuántos avanzan y cuántos se pierden.
+ */
+export function FlowFunnel({ stages }: { stages: FunnelStage[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const top = Math.max(1, stages[0]?.value ?? 1);
+  const n = stages.length;
+  const W = 600;
+  const H = 180;
+  const col = W / n;
+  const barW = col * 0.5;
+  const bars = stages.map((s, i) => {
+    const h = Math.max(8, (s.value / top) * H);
+    return { x: i * col + (col - barW) / 2, y: (H - h) / 2, h };
+  });
+  const dim = (i: number) => (hover !== null && hover !== i ? 0.4 : 1);
+
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-8 w-full" preserveAspectRatio="none" aria-hidden="true">
-      <path d={area} fill={color} opacity={0.1} />
-      <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      {last && <circle cx={last[0]} cy={last[1]} r={2.5} fill={color} />}
-    </svg>
+    <>
+      {/* Móvil: embudo vertical con barras centradas */}
+      <ol className="sm:hidden">
+        {stages.map((s, i) => {
+          const prev = stages[i - 1];
+          return (
+            <li key={s.key}>
+              {prev && (
+                <p className="py-1.5 text-center text-[11px] text-ink-faint">
+                  ↓ <span className="font-bold text-ink-soft">{pct(s.value, prev.value, 0)}</span> avanza ·{" "}
+                  <span className="font-semibold" style={{ color: BAD }}>−{NUM.format(prev.value - s.value)}</span>
+                </p>
+              )}
+              <div className="flex items-baseline justify-between gap-2">
+                <p className="flex items-center gap-1.5 text-[13px] font-medium text-ink">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: s.color }}>
+                    {i + 1}
+                  </span>
+                  {s.label}
+                </p>
+                <p className="text-[15px] font-bold tabular-nums text-ink">
+                  {NUM.format(s.value)}{" "}
+                  <span className="text-[11px] font-semibold" style={{ color: s.color }}>{pct(s.value, top, s.value === top ? 0 : 1)}</span>
+                </p>
+              </div>
+              <div className="mt-1.5 flex justify-center">
+                <div className="h-6 rounded-md" style={{ width: `${Math.max(4, (s.value / top) * 100)}%`, backgroundColor: s.color }} />
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+    <div className="-mx-1 hidden overflow-x-auto px-1 [scrollbar-width:thin] sm:block">
+      <div className="min-w-[600px]">
+        <div className="grid" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+          {stages.map((s, i) => (
+            <div
+              key={s.key}
+              className="px-1 text-center transition-opacity"
+              style={{ opacity: dim(i) }}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+              title={s.hint}
+            >
+              <span
+                className="mx-auto flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                style={{ backgroundColor: s.color }}
+              >
+                {i + 1}
+              </span>
+              <p className="mt-1.5 min-h-[32px] text-[12px] font-medium leading-tight text-ink-soft">{s.label}</p>
+              <p className="mt-1 text-[22px] font-bold leading-none tabular-nums text-ink">{NUM.format(s.value)}</p>
+              <p className="mt-1 text-[11px] font-semibold tabular-nums" style={{ color: s.color }}>
+                {pct(s.value, top, s.value === top ? 0 : 1)}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="relative mt-3">
+          <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-[180px] w-full" aria-hidden="true">
+            {bars.slice(0, -1).map((b, i) => {
+              const nb = bars[i + 1];
+              return (
+                <polygon
+                  key={`band-${i}`}
+                  points={`${b.x + barW},${b.y} ${nb.x},${nb.y} ${nb.x},${nb.y + nb.h} ${b.x + barW},${b.y + b.h}`}
+                  fill={stages[i].color}
+                  opacity={hover === null || hover === i || hover === i + 1 ? 0.16 : 0.06}
+                  className="transition-opacity"
+                />
+              );
+            })}
+            {bars.map((b, i) => (
+              <rect
+                key={stages[i].key}
+                x={b.x}
+                y={b.y}
+                width={barW}
+                height={b.h}
+                rx={6}
+                fill={stages[i].color}
+                opacity={dim(i)}
+                className="transition-[opacity] duration-300"
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+              />
+            ))}
+          </svg>
+
+          {stages.slice(1).map((s, j) => {
+            const prev = stages[j];
+            const lost = prev.value - s.value;
+            return (
+              <div
+                key={`drop-${s.key}`}
+                className="pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-md bg-white/90 px-1.5 py-1 text-center leading-tight shadow-sm ring-1 ring-silver-200"
+                style={{ left: `${((j + 1) / n) * 100}%` }}
+              >
+                <p className="text-[11px] font-bold tabular-nums text-ink">{pct(s.value, prev.value, 0)}</p>
+                <p className="text-[10px] font-semibold tabular-nums" style={{ color: BAD }}>
+                  −{NUM.format(lost)}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-3 text-center text-[11px] text-ink-faint">
+          Entre cada paso: <span className="font-semibold text-ink-soft">% que avanza</span> y{" "}
+          <span className="font-semibold" style={{ color: BAD }}>personas que se pierden</span>
+        </p>
+      </div>
+    </div>
+    </>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Embudo                                                              */
+/* Columnas agrupadas (comparativa entre landings)                     */
 /* ------------------------------------------------------------------ */
 
-export type FunnelStage = { key: string; label: string; hint: string; value: number };
-
-export function Funnel({ stages }: { stages: FunnelStage[] }) {
+export function GroupedColumns({
+  groups,
+  series,
+}: {
+  /** values: una tasa 0–1 por serie, en el mismo orden que `series`. */
+  groups: { label: string; values: number[]; detail: string[] }[];
+  series: { key: string; label: string; color: string }[];
+}) {
   const [hover, setHover] = useState<number | null>(null);
-  const top = Math.max(1, stages[0]?.value ?? 1);
+  const ticks = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <ol className="space-y-1">
-      {stages.map((stage, i) => {
-        const width = Math.max(3, (stage.value / top) * 100);
-        const prev = stages[i - 1];
-        const lost = prev ? prev.value - stage.value : 0;
-        const dim = hover !== null && hover !== i;
-        return (
-          <li key={stage.key}>
-            {prev && (
-              <div className="flex items-center gap-2 py-1 pl-1 text-[11px] md:text-[12px] text-ink-faint">
-                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                  <path d="M5 1v8m0 0L2 6m3 3l3-3" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" />
-                </svg>
-                <span>
-                  <span className="font-semibold text-ink-soft">{pct(stage.value, prev.value)}</span> continúa
-                </span>
-                <span aria-hidden="true">·</span>
-                <span>
-                  se pierden <span className="font-semibold" style={{ color: BAD }}>{NUM.format(lost)}</span> ({pct(lost, prev.value)})
-                </span>
-              </div>
-            )}
+    <div>
+      <div className="relative ml-8 h-56">
+        {ticks.map((t) => (
+          <div key={t} className="absolute inset-x-0 border-t border-dashed border-silver-200" style={{ bottom: `${t * 100}%` }}>
+            <span className="absolute -left-8 -translate-y-1/2 text-[10px] tabular-nums text-ink-faint">{t * 100}%</span>
+          </div>
+        ))}
+        <div className="absolute inset-0 flex items-end gap-1 sm:gap-2">
+          {groups.map((g, gi) => (
             <div
-              className="group grid grid-cols-[1fr_auto] items-center gap-3 rounded-xl px-1 py-1 transition-opacity"
-              style={{ opacity: dim ? 0.45 : 1 }}
-              onMouseEnter={() => setHover(i)}
+              key={g.label}
+              className="relative flex h-full flex-1 items-end justify-center gap-1 rounded-t-lg pt-6 transition-colors"
+              style={{ backgroundColor: hover === gi ? "rgba(42,42,42,0.04)" : undefined }}
+              onMouseEnter={() => setHover(gi)}
               onMouseLeave={() => setHover(null)}
             >
-              <div className="min-w-0">
-                <div className="mb-1 flex items-baseline gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-silver-100 text-[10px] font-semibold text-ink-soft">
-                    {i + 1}
+              {g.values.map((v, si) => (
+                <div key={series[si].key} className="flex h-full w-full max-w-[26px] flex-col items-center justify-end">
+                  <span className="mb-1 text-[10px] font-bold tabular-nums" style={{ color: series[si].color }}>
+                    {Math.round(v * 100)}%
                   </span>
-                  <span className="truncate text-[13px] font-medium text-ink">{stage.label}</span>
-                  <span className="hidden sm:inline truncate text-[11px] text-ink-faint">{stage.hint}</span>
-                </div>
-                <div className="h-7 w-full rounded-md bg-silver-50">
                   <div
-                    className="h-full rounded-md transition-[width] duration-700 ease-out"
-                    style={{ width: `${width}%`, backgroundColor: BLUE_RAMP[Math.min(i, BLUE_RAMP.length - 1)] }}
+                    className="w-full rounded-t-md transition-[height] duration-700 ease-out"
+                    style={{ height: `${Math.max(1.5, v * 100)}%`, background: `linear-gradient(180deg, ${series[si].color}, ${series[si].color}cc)` }}
                   />
                 </div>
-              </div>
-              <div className="w-[64px] text-right">
-                <p className="text-[15px] font-semibold tabular-nums text-ink">{NUM.format(stage.value)}</p>
-                <p className="text-[11px] tabular-nums text-ink-faint">{pct(stage.value, top, stage.value === top ? 0 : 1)}</p>
-              </div>
+              ))}
+              {hover === gi && (
+                <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-silver-200 bg-white px-3 py-2 text-[11px] shadow-lg">
+                  <p className="font-semibold text-ink">{g.label}</p>
+                  {series.map((s, si) => (
+                    <p key={s.key} className="mt-0.5 flex items-center gap-1.5 text-ink-muted">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                      {s.label}: <span className="font-semibold text-ink">{g.detail[si]}</span>
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
-          </li>
-        );
-      })}
-    </ol>
+          ))}
+        </div>
+      </div>
+      <div className="ml-8 mt-2 flex gap-1 sm:gap-2">
+        {groups.map((g) => (
+          <p key={g.label} className="flex-1 text-center text-[11px] font-medium leading-tight text-ink-muted">
+            {g.label}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -434,6 +556,109 @@ export function SplitBar({ parts }: { parts: { label: string; value: number; col
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Ranking en píldoras (clics por botón)                               */
+/* ------------------------------------------------------------------ */
+
+export function RankedPills({
+  items,
+  color,
+  total,
+}: {
+  items: { label: string; sub?: string; value: number; color?: string }[];
+  color: string;
+  total: number;
+}) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  const [hover, setHover] = useState<number | null>(null);
+  return (
+    <ol className="space-y-2">
+      {items.map((item, i) => {
+        const c = item.color ?? color;
+        return (
+          <li
+            key={`${item.label}-${item.sub ?? i}`}
+            className="relative flex h-14 items-center overflow-hidden rounded-xl bg-silver-50 transition-opacity"
+            style={{ opacity: hover !== null && hover !== i ? 0.5 : 1 }}
+            onMouseEnter={() => setHover(i)}
+            onMouseLeave={() => setHover(null)}
+          >
+            <div
+              className="absolute inset-y-0 left-0 rounded-xl transition-[width] duration-700 ease-out"
+              style={{ width: `${Math.max(6, (item.value / max) * 100)}%`, background: `linear-gradient(90deg, ${c}33, ${c}1f)`, borderLeft: `4px solid ${c}` }}
+            />
+            <span
+              className="relative ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[12px] font-bold text-white"
+              style={{ backgroundColor: c }}
+            >
+              {i + 1}
+            </span>
+            <div className="relative ml-3 min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-ink">{item.label}</p>
+              {item.sub && <p className="truncate text-[11px] text-ink-muted">{item.sub}</p>}
+            </div>
+            <div className="relative mr-3 shrink-0 text-right">
+              <p className="text-[16px] font-bold leading-none tabular-nums text-ink">{NUM.format(item.value)}</p>
+              <p className="mt-0.5 text-[11px] font-semibold tabular-nums" style={{ color: c }}>{pct(item.value, total, 0)}</p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Columnas de fuga (abandono por campo, en orden del formulario)      */
+/* ------------------------------------------------------------------ */
+
+export function DropoffColumns({ items, total }: { items: { label: string; value: number }[]; total: number }) {
+  const max = Math.max(1, ...items.map((i) => i.value));
+  const worst = items.findIndex((i) => i.value === max);
+  const [hover, setHover] = useState<number | null>(null);
+  return (
+    <div>
+      <div className="flex h-52 items-end gap-1.5 sm:gap-2">
+        {items.map((item, i) => {
+          const isWorst = i === worst;
+          return (
+            <div
+              key={item.label}
+              className="flex h-full min-w-0 flex-1 flex-col items-center justify-end transition-opacity"
+              style={{ opacity: hover !== null && hover !== i ? 0.45 : 1 }}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+            >
+              {isWorst && (
+                <span className="mb-1 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: BAD }}>
+                  Mayor fuga
+                </span>
+              )}
+              <p className="text-[12px] font-bold tabular-nums" style={{ color: isWorst ? BAD : "#2A2A2A" }}>{pct(item.value, total, 0)}</p>
+              <p className="mb-1 text-[10px] tabular-nums text-ink-faint">{NUM.format(item.value)}</p>
+              <div
+                className="w-full max-w-[44px] rounded-t-lg transition-[height] duration-700 ease-out"
+                style={{
+                  height: `${Math.max(3, (item.value / max) * 62)}%`,
+                  background: isWorst ? `linear-gradient(180deg, ${BAD}, #e2635f)` : "linear-gradient(180deg, #f3a37f, #f8c9b2)",
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex gap-1.5 border-t border-silver-200 pt-2 sm:gap-2">
+        {items.map((item, i) => (
+          <p key={item.label} className="min-w-0 flex-1 text-center text-[10px] font-medium leading-tight text-ink-muted" style={{ color: i === worst ? BAD : undefined }}>
+            {item.label}
+          </p>
+        ))}
+      </div>
+      <p className="mt-3 text-[11px] text-ink-faint">En el orden del formulario: cada columna es el último campo que tocaron antes de irse.</p>
     </div>
   );
 }
