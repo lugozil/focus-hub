@@ -569,7 +569,7 @@ export function ContactoBForm({
             ¿Qué servicios te interesan?{" "}
             <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
           </legend>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {serviceOptions.map((servicio) => {
               const active = values.servicios.includes(servicio);
               return (
@@ -579,7 +579,7 @@ export function ContactoBForm({
                   role="checkbox"
                   aria-checked={active}
                   onClick={() => toggleServicio(servicio)}
-                  className={`${optionButtonClass(active)} flex items-center gap-2 text-left`}
+                  className={`${optionButtonClass(active)} flex flex-col items-center justify-center gap-2 leading-snug`}
                 >
                   <span
                     aria-hidden="true"
