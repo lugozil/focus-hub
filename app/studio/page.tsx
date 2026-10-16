@@ -14,27 +14,21 @@ export const metadata: Metadata = {
 
 const SERVICES = [
   {
-    title: "Contenido orgánico",
+    title: "Planificación de contenido",
     description:
-      "Piezas pensadas para redes que conectan con tu audiencia, generan confianza y mantienen tu dealer presente todas las semanas.",
+      "Estrategia, calendario y guiones pensados para tu dealer, para que cada pieza tenga un objetivo claro.",
     icon: "M4 6h16M4 12h10M4 18h7",
   },
   {
-    title: "Producción cinematográfica",
+    title: "Producciones audiovisuales",
     description:
       "Filmmakers profesionales, dirección creativa y narrativa visual para mostrar tu marca y tu inventario como se merecen.",
     icon: "M15 10l5-3v10l-5-3M4 6h11v12H4z",
   },
   {
-    title: "Contenido publicitario",
+    title: "Creación completa de contenido",
     description:
-      "Videos y piezas para anuncios diseñados para detener el scroll y convertir vistas en visitas a tu dealer.",
-    icon: "M3 11l15-6v14L3 13v-2zM7 13v5h3v-4",
-  },
-  {
-    title: "Gestión de redes sociales",
-    description:
-      "Planificación, publicación y seguimiento de tus perfiles para que tu marca crezca con constancia y estrategia.",
+      "De la idea a la publicación: planificamos, producimos y entregamos el contenido listo para tus redes y anuncios.",
     icon: "M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4",
   },
 ];
@@ -71,7 +65,7 @@ export default function StudioPage() {
   return (
     <>
       <LandingHeader
-        logoClassName="h-6 w-auto"
+        logoClassName="h-4 w-auto"
         logo={{
           src: "/focus-studio-logo.png",
           alt: "FOCUS HUB Studio",
@@ -156,7 +150,7 @@ export default function StudioPage() {
               </p>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:gap-4 sm:grid-cols-2">
+            <div className="mt-8 grid gap-3 sm:gap-4 sm:grid-cols-3">
               {SERVICES.map((service) => (
                 <div
                   key={service.title}
