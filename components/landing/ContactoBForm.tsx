@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
 
 declare global {
@@ -22,7 +22,7 @@ type Values = {
 
 type ContactoBFormProps = {
   variante?: string;
-  /** Si se pasa, se muestra la pregunta de servicio de interés (select, obligatoria). */
+  /** Si se pasa, se muestra la pregunta de servicio de interés (multiselección, obligatoria). */
   serviceOptions?: string[];
   /** Nombres de eventos para Vercel Analytics y el dataLayer (GTM). */
   events?: {
@@ -78,7 +78,7 @@ function validate(values: Values, requireServicios: boolean): Errors {
   }
   if (!values.carrosPorMes) errors.carrosPorMes = "Selecciona una opción.";
   if (requireServicios && values.servicios.length === 0) {
-    errors.servicios = "Selecciona un servicio.";
+    errors.servicios = "Selecciona al menos un servicio.";
   }
 
   return errors;
@@ -176,6 +176,101 @@ const FULL_DATE_FORMATTER = new Intl.DateTimeFormat("es", {
   year: "numeric",
 });
 
+function ServiceMultiSelect({
+  options,
+  selected,
+  onToggle,
+  hasError,
+}: {
+  options: string[];
+  selected: string[];
+  onToggle: (option: string) => void;
+  hasError: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby="servicios-label"
+        onClick={() => setOpen((o) => !o)}
+        className={`form-control flex items-center justify-between gap-2 text-left ${hasError ? "has-error" : ""}`}
+      >
+        <span className={`truncate ${selected.length ? "" : "text-ink-faint"}`}>
+          {selected.length ? selected.join(", ") : "Selecciona una o varias opciones"}
+        </span>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className={`shrink-0 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+      {open && (
+        <ul
+          role="listbox"
+          aria-multiselectable="true"
+          aria-labelledby="servicios-label"
+          className="absolute left-0 right-0 z-20 mt-1 rounded-xl border border-silver-300 bg-white p-1 shadow-lg"
+        >
+          {options.map((option) => {
+            const active = selected.includes(option);
+            return (
+              <li key={option}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => onToggle(option)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm text-ink hover:bg-silver-50"
+                >
+                  <span
+                    aria-hidden="true"
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
+                      active ? "border-ink bg-ink text-white" : "border-silver-400"
+                    }`}
+                  >
+                    {active && (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </span>
+                  {option}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function optionButtonClass(active: boolean) {
   return [
     "rounded-xl border px-3 py-2.5 text-[13px] font-medium text-center transition-colors",
@@ -219,6 +314,13 @@ export function ContactoBForm({
 
   const errors = validate(values, requireServicios);
 
+  const toggleServicio = (servicio: string) =>
+    setValues((prev) => ({
+      ...prev,
+      servicios: prev.servicios.includes(servicio)
+        ? prev.servicios.filter((s) => s !== servicio)
+        : [...prev.servicios, servicio],
+    }));
   const showErrors = formSubmitted;
 
   function submitLead(payload: {
@@ -558,18 +660,16 @@ export function ContactoBForm({
 
       {serviceOptions && serviceOptions.length > 0 && (
         <div>
-          <label className="form-label" htmlFor="servicio">¿Qué servicio te interesa?</label>
-          <select
-            id="servicio"
-            value={values.servicios[0] ?? ""}
-            onChange={(e) => update({ servicios: [e.target.value] })}
-            className={`form-control ${showErrors && errors.servicios ? "has-error" : ""}`}
-          >
-            <option value="" disabled>Selecciona una opción</option>
-            {serviceOptions.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
+          <label className="form-label" id="servicios-label">
+            ¿Qué servicios te interesan?{" "}
+            <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
+          </label>
+          <ServiceMultiSelect
+            options={serviceOptions}
+            selected={values.servicios}
+            onToggle={toggleServicio}
+            hasError={Boolean(showErrors && errors.servicios)}
+          />
           {showErrors && errors.servicios && <p className="form-error">{errors.servicios}</p>}
         </div>
       )}
