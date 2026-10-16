@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { track } from "@vercel/analytics";
+import { sendEvent } from "@/lib/tracking";
 
 declare global {
   interface Window {
@@ -209,6 +210,7 @@ function ServiceMultiSelect({
   return (
     <div ref={ref} className="relative">
       <button
+        id="servicios"
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -352,6 +354,8 @@ export function ContactoBForm({
     if (Object.keys(validate(values, requireServicios)).length > 0) return;
     track(events.formularioCompleto);
     window.dataLayer?.push({ event: events.fase1 });
+    sendEvent("form_submit");
+    sendEvent("form_field", { name: "Calendario (fase 2)" });
     // No bloqueante: el lead se guarda con placeholder de cita mientras la
     // persona ve el calendario; si agenda, la fase 2 actualiza el mismo
     // registro (match por email+teléfono) en vez de crear uno nuevo.
@@ -377,6 +381,7 @@ export function ContactoBForm({
       });
       if (!res.ok) throw new Error("request-failed");
       track(events.citaAgendada);
+      sendEvent("cita");
       window.dataLayer?.push({ event: events.citaAgendada });
       setStep("success");
     } catch {
@@ -556,6 +561,7 @@ export function ContactoBForm({
 
   return (
     <form
+      data-track-form
       onSubmit={handleContinuar}
       className="rounded-2xl border border-silver-200 bg-white p-6 md:p-8 space-y-5"
       noValidate

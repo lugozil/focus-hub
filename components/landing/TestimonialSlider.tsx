@@ -7,6 +7,8 @@ import { LazyVideo } from "@/components/landing/LazyVideo";
 type TestimonialVideo = {
   src: string;
   label?: string;
+  /** Nombre con el que aparece en el dashboard. */
+  trackName?: string;
 };
 
 type TestimonialSliderProps = {
@@ -95,6 +97,7 @@ export function TestimonialSlider({ videos, className }: TestimonialSliderProps)
             >
               <LazyVideo
                 src={video.src}
+                trackName={video.trackName}
                 className="aspect-video w-full rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black"
               />
             </div>

@@ -4,6 +4,7 @@ import { LandingFooter } from "@/components/landing/LandingFooter";
 import { ContactoBForm } from "@/components/landing/ContactoBForm";
 import { TestimonialSlider } from "@/components/landing/TestimonialSlider";
 import { PageviewTracker } from "@/components/landing/PageviewTracker";
+import { LandingTracker } from "@/components/landing/LandingTracker";
 
 export const metadata: Metadata = {
   title: "Contacto — FOCUS Hub",
@@ -12,10 +13,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function CtaButton({ children }: { children: React.ReactNode }) {
+function CtaButton({ children, ubicacion }: { children: string; ubicacion: string }) {
   return (
     <a
       href="#formulario"
+      data-track-cta={children}
+      data-track-ubicacion={ubicacion}
       className="inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium px-6 py-3.5 hover:bg-ink-soft transition-colors"
     >
       {children}
@@ -37,6 +40,7 @@ export default function ContactoBPage() {
     <>
       <LandingHeader logoClassName="h-6 w-auto" />
       <PageviewTracker variante="contacto-b" />
+      <LandingTracker landing="performance" />
       <main id="top">
         {/* ---------- HERO ---------- */}
         <section className="relative isolate overflow-hidden">
@@ -78,6 +82,7 @@ export default function ContactoBPage() {
             <div className="mt-6 mx-auto aspect-video w-full max-w-[420px] md:max-w-full rounded-2xl overflow-hidden border border-silver-200 shadow-lg bg-black">
               <video
                 src="/VSL.mp4"
+                data-track-video="VSL principal"
                 controls
                 playsInline
                 preload="metadata"
@@ -88,7 +93,7 @@ export default function ContactoBPage() {
             </div>
 
             <div className="mt-6">
-              <CtaButton>Quiero mi auditoría gratuita</CtaButton>
+              <CtaButton ubicacion="Hero, bajo el VSL">Quiero mi auditoría gratuita</CtaButton>
             </div>
           </div>
         </section>
@@ -122,13 +127,13 @@ export default function ContactoBPage() {
             <TestimonialSlider
               className="mt-6"
               videos={[
-                { src: "/Voices.mp4" },
-                { src: "/testimonio-hdelgado.mp4", label: "Testimonio de H. Delgado" },
+                { src: "/Voices.mp4", trackName: "Testimonio · Voices" },
+                { src: "/testimonio-hdelgado.mp4", label: "Testimonio de H. Delgado", trackName: "Testimonio · H. Delgado" },
               ]}
             />
 
             <div className="mt-6">
-              <CtaButton>Agendar mi auditoría gratuita</CtaButton>
+              <CtaButton ubicacion="Bajo los testimonios">Agendar mi auditoría gratuita</CtaButton>
             </div>
           </div>
         </section>

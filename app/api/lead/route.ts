@@ -1,4 +1,6 @@
 import { NextResponse, after } from "next/server";
+import { getSql } from "@/lib/db";
+import { VARIANTE_TO_LANDING } from "@/lib/landingEvents";
 
 type LeadPayload = {
   variante: string;
@@ -114,6 +116,35 @@ async function sendToGHL(body: LeadPayload) {
   }
 }
 
+async function saveToDb(body: LeadPayload) {
+  const landing = VARIANTE_TO_LANDING[body.variante];
+  const sql = getSql();
+  if (!landing || !sql) return;
+
+  const agendado = Boolean(body.agendado);
+  const cita = agendado ? `${body.fechaCita ?? ""} · ${body.horaCita ?? ""}` : null;
+  try {
+    // Fase 1 crea el lead; fase 2 (agendado) actualiza el mismo registro.
+    await sql`
+      insert into leads (landing, nombre, email, telefono, dealership, cargo, carros, servicios, agendado, cita)
+      values (${landing}, ${body.nombre.trim()}, ${body.email.trim().toLowerCase()}, ${body.telefono.trim()},
+              ${body.dealership ?? null}, ${body.cargo}, ${body.carrosPorMes ?? null}, ${body.servicios ?? null},
+              ${agendado}, ${cita})
+      on conflict (landing, email, telefono) do update set
+        nombre = excluded.nombre,
+        dealership = excluded.dealership,
+        cargo = excluded.cargo,
+        carros = excluded.carros,
+        servicios = excluded.servicios,
+        agendado = leads.agendado or excluded.agendado,
+        cita = coalesce(excluded.cita, leads.cita),
+        updated_at = now()
+    `;
+  } catch (error) {
+    console.error("Error al guardar el lead en la base de datos", error);
+  }
+}
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
 
@@ -132,6 +163,7 @@ export async function POST(request: Request) {
   // sumar latencia a lo que espera la persona en el formulario.
   after(() => sendToSheets(scriptUrl, body));
   after(() => sendToGHL(body));
+  after(() => saveToDb(body));
 
   return NextResponse.json({ ok: true });
 }

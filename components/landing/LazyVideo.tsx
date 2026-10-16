@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 type LazyVideoProps = {
   src: string;
   className?: string;
+  /** Si se pasa, el video se mide en el dashboard con este nombre. */
+  trackName?: string;
 };
 
-export function LazyVideo({ src, className }: LazyVideoProps) {
+export function LazyVideo({ src, className, trackName }: LazyVideoProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
 
@@ -30,7 +32,7 @@ export function LazyVideo({ src, className }: LazyVideoProps) {
   }, [shouldLoad]);
 
   return (
-    <div ref={containerRef} className={className}>
+    <div ref={containerRef} className={className} data-track-video={trackName}>
       {shouldLoad ? (
         <video src={src} controls playsInline preload="metadata" className="w-full h-full object-cover">
           Tu navegador no soporta la reproducción de video.

@@ -4,6 +4,7 @@ import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { ContactoBForm } from "@/components/landing/ContactoBForm";
 import { PageviewTracker } from "@/components/landing/PageviewTracker";
+import { LandingTracker } from "@/components/landing/LandingTracker";
 
 export const metadata: Metadata = {
   title: "FOCUS Hub Studio — Contenido que marca la diferencia",
@@ -41,10 +42,12 @@ const STUDIO_EVENTS = {
   citaAgendada: "studio_cita_agendada",
 };
 
-function CtaButton({ children }: { children: React.ReactNode }) {
+function CtaButton({ children, ubicacion }: { children: string; ubicacion: string }) {
   return (
     <a
       href="#formulario"
+      data-track-cta={children}
+      data-track-ubicacion={ubicacion}
       className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-ink text-white text-[15px] sm:text-[14px] font-medium px-6 py-4 sm:py-3.5 hover:bg-ink-soft transition-colors"
     >
       {children}
@@ -74,6 +77,7 @@ export default function StudioPage() {
         }}
       />
       <PageviewTracker variante="studio" />
+      <LandingTracker landing="studio" />
       <main id="top">
         {/* ---------- HERO ---------- */}
         <section className="relative isolate overflow-hidden">
@@ -118,7 +122,7 @@ export default function StudioPage() {
               </p>
 
               <div className="mt-6">
-                <CtaButton>Quiero destacar mi marca</CtaButton>
+                <CtaButton ubicacion="Hero">Quiero destacar mi marca</CtaButton>
               </div>
             </div>
 
@@ -176,7 +180,7 @@ export default function StudioPage() {
             </div>
 
             <div className="mt-8 text-center">
-              <CtaButton>Quiero destacar mi marca</CtaButton>
+              <CtaButton ubicacion="Bajo los servicios">Quiero destacar mi marca</CtaButton>
             </div>
           </div>
         </section>

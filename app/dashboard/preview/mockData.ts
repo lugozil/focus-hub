@@ -2,28 +2,11 @@
 // Se generan con una semilla fija para que el servidor y el navegador
 // produzcan exactamente los mismos números (sin errores de hidratación).
 
-export type LandingKey = "performance" | "studio";
-export type LandingFilter = LandingKey | "todas";
+import type { DashboardData, DayRow, LandingKey, LeadRow } from "../types";
 
-export const LANDINGS: { key: LandingKey; label: string; path: string; color: string }[] = [
-  { key: "performance", label: "Performance", path: "/contacto-b", color: "#2a78d6" },
-  { key: "studio", label: "Studio", path: "/studio", color: "#eb6834" },
-];
+export type { DayRow, LandingFilter, LandingKey, LeadRow } from "../types";
 
-export type DayRow = {
-  fecha: string;
-  landing: LandingKey;
-  visitas: number;
-  scroll25: number;
-  scroll50: number;
-  scroll75: number;
-  scroll100: number;
-  ctaClicks: number;
-  formInicio: number;
-  formCompleto: number;
-  citas: number;
-  movil: number;
-};
+
 
 function mulberry32(seed: number) {
   let a = seed;
@@ -120,14 +103,12 @@ export const HEATMAP: Record<LandingKey, number[][]> = {
 /** Reparto por landing para métricas que no se desglosan por día (proporción del período). */
 export const CTA_BUTTONS: Record<LandingKey, { label: string; ubicacion: string; share: number }[]> = {
   performance: [
-    { label: "Quiero mi auditoría gratuita", ubicacion: "Hero, bajo el VSL", share: 0.52 },
-    { label: "Agendar mi auditoría gratuita", ubicacion: "Bajo los testimonios", share: 0.33 },
-    { label: "Agendar mi auditoría", ubicacion: "Envío del formulario", share: 0.15 },
+    { label: "Quiero mi auditoría gratuita", ubicacion: "Hero, bajo el VSL", share: 0.61 },
+    { label: "Agendar mi auditoría gratuita", ubicacion: "Bajo los testimonios", share: 0.39 },
   ],
   studio: [
-    { label: "Quiero destacar mi marca", ubicacion: "Hero", share: 0.58 },
-    { label: "Quiero destacar mi marca", ubicacion: "Bajo los servicios", share: 0.27 },
-    { label: "Continuar para agendar", ubicacion: "Envío del formulario", share: 0.15 },
+    { label: "Quiero destacar mi marca", ubicacion: "Hero", share: 0.68 },
+    { label: "Quiero destacar mi marca", ubicacion: "Bajo los servicios", share: 0.32 },
   ],
 };
 
@@ -175,16 +156,6 @@ export const FUENTES: { fuente: string; share: number }[] = [
   { fuente: "Otros", share: 0.05 },
 ];
 
-export type LeadRow = {
-  fecha: string;
-  nombre: string;
-  dealership: string;
-  cargo: string;
-  landing: LandingKey;
-  servicios?: string;
-  estado: "Cita agendada" | "No agendó";
-  cita?: string;
-};
 
 export const LEADS_RECIENTES: LeadRow[] = [
   { fecha: "14 oct · 9:42 a.m.", nombre: "Carlos M.", dealership: "Auto Group Norte", cargo: "Dueño / CEO", landing: "performance", estado: "Cita agendada", cita: "16 oct · 10:00 a.m." },
@@ -195,3 +166,45 @@ export const LEADS_RECIENTES: LeadRow[] = [
   { fecha: "12 oct · 6:47 p.m.", nombre: "Marisol T.", dealership: "Arecibo Motors", cargo: "Directora de Marketing", landing: "studio", servicios: "Planificación, Audiovisuales", estado: "Cita agendada", cita: "14 oct · 3:00 p.m." },
   { fecha: "12 oct · 10:31 a.m.", nombre: "Héctor L.", dealership: "Carolina Auto Mall", cargo: "Gerente General", landing: "performance", estado: "Cita agendada", cita: "14 oct · 11:30 a.m." },
 ];
+
+/* ------------------------------------------------------------------ */
+/* Adaptador: datos de ejemplo con la misma forma que /api/dashboard   */
+/* ------------------------------------------------------------------ */
+
+const ALL_DATES = Array.from(new Set(DAYS.map((d) => d.fecha)));
+
+export function mockDashboardData(range: number): DashboardData {
+  const dates = ALL_DATES.slice(-range);
+  const prevDates = ALL_DATES.slice(-2 * range, -range);
+  const inWindow = new Set(dates);
+  const keys = ["performance", "studio"] as const;
+  const sum = (k: LandingKey, metric: Exclude<keyof DayRow, "fecha" | "landing">) =>
+    DAYS.filter((r) => r.landing === k && inWindow.has(r.fecha)).reduce((a, r) => a + r[metric], 0);
+
+  const scale = range / 30;
+  return {
+    dates,
+    prevDates,
+    days: DAYS.filter((r) => inWindow.has(r.fecha) || prevDates.includes(r.fecha)),
+    heatmap: {
+      performance: HEATMAP.performance.map((row) => row.map((v) => Math.round(v * scale))),
+      studio: HEATMAP.studio.map((row) => row.map((v) => Math.round(v * scale))),
+    },
+    ctas: keys.flatMap((k) =>
+      CTA_BUTTONS[k].map((b) => ({ landing: k, label: b.label, ubicacion: b.ubicacion, clicks: Math.round(sum(k, "ctaClicks") * b.share) }))
+    ),
+    dropoff: keys.flatMap((k) => {
+      const lost = sum(k, "formInicio") - sum(k, "citas");
+      return FORM_DROPOFF[k].map((f) => ({ landing: k, campo: f.campo, count: Math.round(lost * f.share) }));
+    }),
+    videos: VIDEOS.map((v) => ({
+      landing: v.landing,
+      titulo: v.titulo,
+      plays: Math.round(sum(v.landing, "visitas") * v.playRate),
+      retencion: v.retencion,
+    })),
+    servicios: SERVICIOS_STUDIO.map((s) => ({ servicio: s.servicio, count: Math.round(sum("studio", "formCompleto") * s.share) })),
+    fuentes: keys.flatMap((k) => FUENTES.map((f) => ({ landing: k, fuente: f.fuente, visitas: Math.round(sum(k, "visitas") * f.share) }))),
+    leads: LEADS_RECIENTES,
+  };
+}
