@@ -70,7 +70,15 @@ function CtaButton({ children }: { children: React.ReactNode }) {
 export default function StudioPage() {
   return (
     <>
-      <LandingHeader logoClassName="h-6 w-auto" />
+      <LandingHeader
+        logoClassName="h-6 w-auto"
+        logo={{
+          src: "/focus-studio-logo.png",
+          alt: "FOCUS HUB Studio",
+          width: 1048,
+          height: 112,
+        }}
+      />
       <PageviewTracker variante="studio" />
       <main id="top">
         {/* ---------- HERO ---------- */}
