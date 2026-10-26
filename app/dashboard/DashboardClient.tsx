@@ -11,7 +11,6 @@ type State =
 
 const ERRORS: Record<string, string> = {
   "db-not-configured": "La base de datos todavía no está conectada (falta DATABASE_URL).",
-  unauthorized: "Tu sesión expiró. Vuelve a entrar.",
 };
 
 export function DashboardClient() {
@@ -23,10 +22,6 @@ export function DashboardClient() {
     setState((prev) => ({ status: "loading", data: prev.data }));
     fetch(`/api/dashboard?days=${range}`, { cache: "no-store" })
       .then(async (res) => {
-        if (res.status === 401) {
-          window.location.href = "/dashboard/login";
-          return;
-        }
         const json = await res.json();
         if (cancelled) return;
         if (json.ok) setState({ status: "ready", data: json.data });
@@ -37,11 +32,6 @@ export function DashboardClient() {
       cancelled = true;
     };
   }, [range]);
-
-  async function logout() {
-    await fetch("/api/dashboard/logout", { method: "POST" }).catch(() => {});
-    window.location.href = "/dashboard/login";
-  }
 
   if (!state.data) {
     return (
@@ -64,7 +54,6 @@ export function DashboardClient() {
       range={range}
       onRangeChange={setRange}
       loading={state.status === "loading"}
-      onLogout={logout}
     />
   );
 }

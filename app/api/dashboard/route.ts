@@ -3,7 +3,6 @@ import { getDashboardData } from "@/lib/dashboardQueries";
 
 const RANGES = new Set([7, 30, 90]);
 
-// Protegido por middleware.ts (cookie de sesión del dashboard).
 export async function GET(request: Request) {
   const days = Number(new URL(request.url).searchParams.get("days") ?? 30);
   if (!RANGES.has(days)) {

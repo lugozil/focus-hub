@@ -1,15 +1,6 @@
-import type { Metadata } from "next";
-import { LoginForm } from "./LoginForm";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Acceso al dashboard — FOCUS Hub",
-  robots: { index: false, follow: false },
-};
-
+// El dashboard ya no pide contraseña; se conserva la ruta para los enlaces viejos.
 export default function DashboardLoginPage() {
-  return (
-    <main className="flex min-h-screen items-center justify-center bg-silver-50 px-4">
-      <LoginForm />
-    </main>
-  );
+  redirect("/dashboard");
 }
