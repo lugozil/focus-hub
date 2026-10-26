@@ -190,72 +190,69 @@ export function FlowFunnel({ stages }: { stages: FunnelStage[] }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Columnas agrupadas (comparativa entre landings)                     */
+/* Comparativa entre landings (de cada 100 visitantes)                  */
 /* ------------------------------------------------------------------ */
 
-export function GroupedColumns({
-  groups,
-  series,
-}: {
-  /** values: una tasa 0–1 por serie, en el mismo orden que `series`. */
-  groups: { label: string; values: number[]; detail: string[] }[];
-  series: { key: string; label: string; color: string }[];
-}) {
-  const [hover, setHover] = useState<number | null>(null);
-  const ticks = [0, 0.25, 0.5, 0.75, 1];
+export type CompareSeries = { key: string; label: string; color: string };
 
+/**
+ * Una fila por paso; dentro, una barra por landing con el % de sus visitas
+ * que llega a ese paso. Las barras de cada fila se escalan a la mayor de la
+ * fila para que se vea quién gana aunque los números sean pequeños.
+ */
+export function LandingCompare({
+  series,
+  bases,
+  steps,
+}: {
+  series: CompareSeries[];
+  /** Visitas de cada landing, en el orden de `series`. */
+  bases: number[];
+  steps: { label: string; values: number[] }[];
+}) {
   return (
-    <div>
-      <div className="relative ml-8 h-56">
-        {ticks.map((t) => (
-          <div key={t} className="absolute inset-x-0 border-t border-dashed border-silver-200" style={{ bottom: `${t * 100}%` }}>
-            <span className="absolute -left-8 -translate-y-1/2 text-[10px] tabular-nums text-ink-faint">{t * 100}%</span>
-          </div>
-        ))}
-        <div className="absolute inset-0 flex items-end gap-1 sm:gap-2">
-          {groups.map((g, gi) => (
-            <div
-              key={g.label}
-              className="relative flex h-full flex-1 items-end justify-center gap-1 rounded-t-lg pt-6 transition-colors"
-              style={{ backgroundColor: hover === gi ? "rgba(42,42,42,0.04)" : undefined }}
-              onMouseEnter={() => setHover(gi)}
-              onMouseLeave={() => setHover(null)}
-            >
-              {g.values.map((v, si) => (
-                <div key={series[si].key} className="flex h-full w-full max-w-[26px] flex-col items-center justify-end">
-                  <span className="mb-1 text-[10px] font-bold tabular-nums" style={{ color: series[si].color }}>
-                    {Math.round(v * 100)}%
-                  </span>
-                  <div
-                    className="w-full rounded-t-md transition-[height] duration-700 ease-out"
-                    style={{ height: `${Math.max(1.5, v * 100)}%`, background: `linear-gradient(180deg, ${series[si].color}, ${series[si].color}cc)` }}
-                  />
-                </div>
-              ))}
-              {hover === gi && (
-                <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1 w-max max-w-[200px] -translate-x-1/2 rounded-lg border border-silver-200 bg-white px-3 py-2 text-[11px] shadow-lg">
-                  <p className="font-semibold text-ink">{g.label}</p>
-                  {series.map((s, si) => (
-                    <p key={s.key} className="mt-0.5 flex items-center gap-1.5 text-ink-muted">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
-                      {s.label}: <span className="font-semibold text-ink">{g.detail[si]}</span>
+    <div className="space-y-4">
+      {steps.map((step) => {
+        const shares = step.values.map((v, i) => (bases[i] > 0 ? v / bases[i] : 0));
+        const max = Math.max(...shares);
+        return (
+          <div key={step.label}>
+            <p className="mb-1.5 text-[12px] font-semibold text-ink">{step.label}</p>
+            <div className="space-y-1">
+              {series.map((s, i) => {
+                const best = max > 0 && shares[i] === max && shares.filter((x) => x === max).length === 1;
+                return (
+                  <div key={s.key} className="flex items-center gap-2">
+                    <div className="h-2.5 flex-1 rounded-full bg-silver-100">
+                      <div
+                        className="h-full rounded-full transition-[width] duration-700 ease-out"
+                        style={{ width: max > 0 ? `${Math.max(1.5, (shares[i] / max) * 100)}%` : "0%", backgroundColor: s.color }}
+                      />
+                    </div>
+                    <p className="w-[118px] shrink-0 text-right text-[12px] tabular-nums text-ink-muted">
+                      <span className={best ? "font-bold" : "font-medium"} style={{ color: best ? s.color : undefined }}>
+                        {per100(shares[i])}
+                      </span>{" "}
+                      de 100
+                      <span className="ml-1 text-[10px] text-ink-faint">({NUM.format(step.values[i])})</span>
                     </p>
-                  ))}
-                </div>
-              )}
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
-      <div className="ml-8 mt-2 flex gap-1 sm:gap-2">
-        {groups.map((g) => (
-          <p key={g.label} className="flex-1 text-center text-[11px] font-medium leading-tight text-ink-muted">
-            {g.label}
-          </p>
-        ))}
-      </div>
+          </div>
+        );
+      })}
+      <p className="text-[11px] text-ink-faint">En cada paso, la barra más larga es la landing que mejor lo hace; el número entre paréntesis son personas.</p>
     </div>
   );
+}
+
+/** 0.189 → "18,9"; por encima de 10 se redondea a entero para leerlo rápido. */
+export function per100(share: number) {
+  const v = share * 100;
+  if (v === 0) return "0";
+  return v >= 10 ? Math.round(v).toString() : v.toFixed(1).replace(".", ",");
 }
 
 /* ------------------------------------------------------------------ */
@@ -434,30 +431,74 @@ export function BarList({
 }
 
 /* ------------------------------------------------------------------ */
-/* Columnas (profundidad de scroll)                                    */
+/* Profundidad de scroll                                               */
 /* ------------------------------------------------------------------ */
 
-export function ColumnSteps({ items, base }: { items: { label: string; value: number }[]; base: number }) {
-  const [hover, setHover] = useState<number | null>(null);
+const SCROLL_STEPS = [
+  { label: "Entran a la página", hint: "Ven lo primero (el inicio)" },
+  { label: "Pasan el primer cuarto", hint: "25% de la página" },
+  { label: "Llegan a la mitad", hint: "50% de la página" },
+  { label: "Pasan los tres cuartos", hint: "75% de la página" },
+  { label: "Llegan al final", hint: "Vieron toda la página" },
+];
+
+/**
+ * La página se lee de arriba abajo: cada fila es una altura de la página y
+ * la barra es el % de los visitantes que sigue ahí. Entre filas se marca
+ * cuántos se fueron en ese tramo.
+ */
+export function ScrollDepth({
+  series,
+}: {
+  /** values: personas que llegan a 25/50/75/100%; base: visitas. */
+  series: (CompareSeries & { base: number; values: number[] })[];
+}) {
+  const levels = series.map((s) => [s.base, ...s.values]);
   return (
-    <div className="flex h-48 items-end gap-2 sm:gap-4">
-      {items.map((item, i) => {
-        const h = Math.max(4, (item.value / Math.max(1, base)) * 100);
-        return (
-          <div
-            key={item.label}
-            className="flex h-full flex-1 flex-col items-center justify-end gap-1.5"
-            onMouseEnter={() => setHover(i)}
-            onMouseLeave={() => setHover(null)}
-            style={{ opacity: hover !== null && hover !== i ? 0.5 : 1 }}
-          >
-            <p className="text-[13px] font-semibold tabular-nums text-ink">{pct(item.value, base, 0)}</p>
-            <p className="-mt-1 text-[10px] tabular-nums text-ink-faint">{NUM.format(item.value)}</p>
-            <div className="w-full max-w-[64px] rounded-t-md transition-[height] duration-700 ease-out" style={{ height: `${h}%`, backgroundColor: BLUE_RAMP[2 + i * 2] ?? BLUE_RAMP[7] }} />
-            <p className="text-[11px] font-medium text-ink-muted">{item.label}</p>
+    <div>
+      {SCROLL_STEPS.map((step, i) => (
+        <div key={step.label}>
+          {i > 0 && (
+            <div className="flex flex-wrap gap-x-3 py-1 pl-3 text-[11px]">
+              {series.map((s, si) => {
+                const [from, to] = [levels[si][i - 1], levels[si][i]];
+                const lost = s.base > 0 ? Math.max(0, from - to) / s.base : 0;
+                return (
+                  <span key={s.key} className="inline-flex items-center gap-1" style={{ color: lost >= 0.2 ? BAD : undefined }}>
+                    <svg width="8" height="8" viewBox="0 0 10 10" aria-hidden="true" className={lost >= 0.2 ? "" : "text-ink-faint"}>
+                      <path d="M5 9L1 3h8z" fill="currentColor" />
+                    </svg>
+                    <span className={lost >= 0.2 ? "font-semibold" : "text-ink-faint"}>
+                      {series.length > 1 && `${s.label}: `}se van {per100(lost)} de 100
+                    </span>
+                  </span>
+                );
+              })}
+            </div>
+          )}
+          <div className="rounded-xl border border-silver-200 px-3 py-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <p className="text-[12px] font-semibold text-ink">{step.label}</p>
+              <p className="text-[10px] text-ink-faint">{step.hint}</p>
+            </div>
+            <div className="mt-1.5 space-y-1">
+              {series.map((s, si) => {
+                const share = s.base > 0 ? levels[si][i] / s.base : 0;
+                return (
+                  <div key={s.key} className="flex items-center gap-2">
+                    <div className="h-2 flex-1 rounded-full bg-silver-100">
+                      <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: `${share * 100}%`, backgroundColor: s.color }} />
+                    </div>
+                    <p className="w-[70px] shrink-0 text-right text-[12px] tabular-nums text-ink-muted">
+                      <span className="font-semibold text-ink">{per100(share)}</span> de 100
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        );
-      })}
+        </div>
+      ))}
     </div>
   );
 }

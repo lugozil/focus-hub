@@ -5,17 +5,18 @@ import {
   BAD,
   BLUE_RAMP,
   BarList,
-  ColumnSteps,
   DropoffColumns,
   FlowFunnel,
   GOOD,
-  GroupedColumns,
   Heatmap,
+  LandingCompare,
   NUM,
   RankedPills,
+  ScrollDepth,
   SplitBar,
   TrendChart,
   pct,
+  per100,
   type FunnelStage,
   type TrendSeries,
 } from "./charts";
@@ -188,6 +189,36 @@ function KpiTile({
   );
 }
 
+/** Lectura en una frase, con el color de la landing a la que se refiere. */
+function Insights({ items }: { items: { color: string; label: string; text: string }[] }) {
+  if (!items.length) return null;
+  return (
+    <ul className="mt-5 space-y-2 border-t border-silver-100 pt-4">
+      {items.map((it) => (
+        <li key={it.label} className="flex gap-2 text-[12px] leading-snug text-ink-soft">
+          <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: it.color }} />
+          <span>
+            <span className="font-semibold text-ink">{it.label}:</span> {it.text}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Paso del recorrido donde avanza la menor proporción (con al menos 5 personas para no leer ruido). */
+function biggestLeak(t: Totals, steps: { key: string; label: string }[]) {
+  let worst: { from: string; to: string; rate: number } | null = null;
+  for (let i = 1; i < steps.length; i++) {
+    const from = t[steps[i - 1].key as MetricKey];
+    const to = t[steps[i].key as MetricKey];
+    if (from < 5) continue;
+    const rate = Math.min(1, to / from);
+    if (!worst || rate < worst.rate) worst = { from: steps[i - 1].label, to: steps[i].label, rate };
+  }
+  return worst;
+}
+
 /* ------------------------------------------------------------------ */
 
 const TREND_METRICS: { key: MetricKey; label: string }[] = [
@@ -259,7 +290,7 @@ export function DashboardView({
 
   const kpis: { key: MetricKey; label: string; rate?: string }[] = [
     { key: "visitas", label: "Visitas" },
-    { key: "scroll50", label: "Scroll 50%+", rate: `${pct(totals.scroll50, totals.visitas)} de las visitas` },
+    { key: "scroll50", label: "Llegan a la mitad", rate: `${pct(totals.scroll50, totals.visitas)} de las visitas` },
     { key: "ctaClicks", label: "Clics en CTA", rate: `${pct(totals.ctaClicks, totals.visitas)} de las visitas` },
     { key: "formInicio", label: "Tocan el form", rate: `${pct(totals.formInicio, totals.ctaClicks)} de los clics` },
     { key: "formCompleto", label: "Forms completos", rate: `${pct(totals.formCompleto, totals.formInicio)} de quienes lo tocan` },
@@ -397,7 +428,7 @@ export function DashboardView({
             <FlowFunnel stages={stages} />
           </Card>
 
-          <Card title="Performance vs. Studio" subtitle="% que avanza de cada paso al siguiente">
+          <Card title="Performance vs. Studio" subtitle="De cada 100 visitantes de cada landing, cuántos llegan a cada paso">
             <div className="mb-5 grid grid-cols-2 gap-2">
               {LANDINGS.map((l) => (
                 <div key={l.key} className="rounded-xl px-3 py-2" style={{ backgroundColor: `${l.color}14` }}>
@@ -405,29 +436,33 @@ export function DashboardView({
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: l.color }} />
                     {l.label}
                   </p>
-                  <p className="mt-0.5 text-[20px] font-bold leading-none tabular-nums" style={{ color: l.color }}>
-                    {pct(perLanding[l.key].citas, perLanding[l.key].visitas, 2)}
+                  <p className="mt-1 text-[20px] font-bold leading-none tabular-nums" style={{ color: l.color }}>
+                    {NUM.format(perLanding[l.key].visitas)}
                   </p>
-                  <p className="mt-0.5 text-[10px] text-ink-faint">conversión total a cita</p>
+                  <p className="mt-0.5 text-[10px] text-ink-faint">
+                    visitas · {NUM.format(perLanding[l.key].citas)} {perLanding[l.key].citas === 1 ? "cita" : "citas"}
+                  </p>
                 </div>
               ))}
             </div>
-            <GroupedColumns
+            <LandingCompare
               series={LANDINGS}
-              groups={stages.slice(1).map((s, i) => {
-                const from = stages[i].key as MetricKey;
-                const to = s.key as MetricKey;
-                return {
-                  label: s.label,
-                  values: LANDINGS.map((l) => {
-                    const t = perLanding[l.key];
-                    return t[from] ? t[to] / t[from] : 0;
-                  }),
-                  detail: LANDINGS.map((l) => {
-                    const t = perLanding[l.key];
-                    return `${NUM.format(t[to])} de ${NUM.format(t[from])}`;
-                  }),
-                };
+              bases={LANDINGS.map((l) => perLanding[l.key].visitas)}
+              steps={stages.slice(1).map((st) => ({
+                label: st.label,
+                values: LANDINGS.map((l) => perLanding[l.key][st.key as MetricKey]),
+              }))}
+            />
+            <Insights
+              items={LANDINGS.flatMap((l) => {
+                const leak = biggestLeak(perLanding[l.key], stages);
+                return leak
+                  ? [{
+                      color: l.color,
+                      label: l.label,
+                      text: `el mayor freno está entre «${leak.from}» y «${leak.to}»: solo avanzan ${per100(leak.rate)} de cada 100.`,
+                    }]
+                  : [];
               })}
             />
           </Card>
@@ -462,15 +497,24 @@ export function DashboardView({
 
         {/* ---------- Scroll + mapa de calor ---------- */}
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_1.6fr]">
-          <Card title="Profundidad de scroll" subtitle="Hasta dónde bajan los visitantes">
-            <ColumnSteps
-              base={totals.visitas}
-              items={[
-                { label: "25%", value: totals.scroll25 },
-                { label: "50%", value: totals.scroll50 },
-                { label: "75%", value: totals.scroll75 },
-                { label: "100%", value: totals.scroll100 },
-              ]}
+          <Card title="¿Hasta dónde leen la página?" subtitle="De cada 100 visitantes, cuántos siguen leyendo a medida que bajan">
+            <ScrollDepth
+              series={keys.map((k) => {
+                const t = perLanding[k];
+                return { ...landingMeta(k), base: t.visitas, values: [t.scroll25, t.scroll50, t.scroll75, t.scroll100] };
+              })}
+            />
+            <Insights
+              items={keys.flatMap((k) => {
+                const t = perLanding[k];
+                if (!t.visitas) return [];
+                const gone = 1 - t.scroll25 / t.visitas;
+                return [{
+                  color: landingMeta(k).color,
+                  label: landingMeta(k).label,
+                  text: `${per100(gone)} de cada 100 se van sin pasar el primer cuarto de la página; ${per100(t.scroll100 / t.visitas)} la leen hasta el final.`,
+                }];
+              })}
             />
           </Card>
           <Card title="¿Cuándo llegan las visitas?" subtitle="Día de la semana y hora (hora de Puerto Rico)">
