@@ -5,6 +5,9 @@ import { VARIANTE_TO_LANDING } from "@/lib/landingEvents";
 type LeadPayload = {
   variante: string;
   nombre: string;
+  firstName?: string;
+  lastName?: string;
+  ubicacion?: string;
   telefono: string;
   email: string;
   cargo: string;
@@ -84,7 +87,9 @@ async function sendToGHL(body: LeadPayload) {
   const webhookUrl = process.env.GHL_WEBHOOK_URL;
   if (!webhookUrl) return;
 
-  const { firstName, lastName } = splitNombre(body.nombre);
+  const split = splitNombre(body.nombre);
+  const firstName = typeof body.firstName === "string" && body.firstName.trim() ? body.firstName.trim() : split.firstName;
+  const lastName = typeof body.lastName === "string" && body.lastName.trim() ? body.lastName.trim() : split.lastName;
   const start = Date.now();
 
   try {
@@ -99,6 +104,7 @@ async function sendToGHL(body: LeadPayload) {
         cargo: body.cargo,
         variante: body.variante,
         dealership: body.dealership ?? "",
+        ...(body.variante === "contacto-b" && typeof body.ubicacion === "string" ? { ubicacion: body.ubicacion.trim() } : {}),
         carrosPorMes: body.carrosPorMes ?? "",
         servicios: body.servicios ?? "",
         inversion: body.inversion ?? "",
