@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { LandingHeader } from "@/components/landing/LandingHeader";
-import { LandingFooter } from "@/components/landing/LandingFooter";
 import { ContactoBForm } from "@/components/landing/ContactoBForm";
 import { PageviewTracker } from "@/components/landing/PageviewTracker";
 import { LandingTracker } from "@/components/landing/LandingTracker";
@@ -13,6 +12,29 @@ export const metadata: Metadata = {
     "Producción audiovisual especializada en la industria automotriz, diseñada para proyectar profesionalismo, generar confianza y atraer potenciales compradores.",
   robots: { index: false, follow: false },
 };
+
+const studioFaqs = [
+  [
+    "¿Qué tipos de contenido desarrollan?",
+    "Desarrollamos fotografía, diseño gráfico y videos para las diversas plataformas digitales, adaptando cada producción a las necesidades y objetivos de tu marca."
+  ],
+  [
+    "¿Se encargan de todo el proceso de creación de contenido?",
+    "Sí. Nuestro equipo se encarga de todo el proceso creativo, desde la planificación y conceptualización hasta la producción, edición y entrega del contenido final."
+  ],
+  [
+    "¿Ofrecen servicios mensuales o producciones individuales?",
+    "Ofrecemos ambas modalidades, adaptándonos a las necesidades de tu marca, ya sea mediante una colaboración mensual o una producción específica."
+  ],
+  [
+    "¿Cuál es la inversión necesaria para trabajar con Studio?",
+    "La inversión depende del volumen de contenido, la complejidad de las producciones y las necesidades de tu marca. Durante nuestra reunión, definiremos una propuesta adaptada a tu negocio."
+  ],
+  [
+    "¿Qué sucede después de completar mi aplicación?",
+    "Tendrás una reunión con nuestro equipo creativo para conocer tus objetivos, evaluar tus necesidades y definir una propuesta de trabajo."
+  ]
+];
 
 const SERVICES = [
   {
@@ -247,8 +269,31 @@ export default function StudioPage() {
             />
           </div>
         </section>
+        {/* ---------- FAQ ---------- */}
+        <section className="mx-auto max-w-4xl px-6 py-10 md:py-16">
+          <h2 className="text-center text-2xl md:text-3xl font-semibold tracking-[-0.02em] text-ink leading-[1.2]">Preguntas frecuentes</h2>
+          <div className="mt-6 divide-y divide-silver-200 border-y border-silver-200">
+            {studioFaqs.map(([question, answer]) => <details key={question} className="group py-4"><summary className="cursor-pointer flex list-none items-center justify-between gap-4 font-medium text-ink [&::-webkit-details-marker]:hidden">{question}<span aria-hidden className="group-open:hidden">+</span><span aria-hidden className="hidden group-open:inline">−</span></summary><p className="mt-3 text-sm leading-relaxed text-ink-muted">{answer}</p></details>)}
+          </div>
+          <div className="mt-6 text-center"><CtaButton ubicacion="Bajo preguntas frecuentes">Iniciar mi aplicación</CtaButton></div>
+        </section>
       </main>
-      <LandingFooter />
+      <footer className="border-t border-silver-200 bg-silver-50">
+        <div className="mx-auto max-w-4xl px-6 py-10 space-y-6">
+          <div className="grid sm:grid-cols-3 gap-6">
+            <div><Image src="/focus-studio-logo.png" alt="FOCUS Hub Studio" width={1048} height={112} className="h-6 w-auto" /><p className="mt-3 text-sm text-ink-muted">Producción audiovisual especializada en la industria automotriz.</p></div>
+            <div className="space-y-2 text-sm"><h3 className="font-semibold">Contacto</h3><a className="block text-ink-muted" href="mailto:sales@focushub.one">sales@focushub.one</a><a className="block text-ink-muted" href="tel:+17874177570">+1 (787) 417-7570</a></div>
+            <div className="space-y-2 text-sm"><h3 className="font-semibold">Legal</h3><a className="block underline text-ink-muted" href="/politica-de-privacidad">Política de Privacidad</a><a className="block underline text-ink-muted" href="/terminos-y-condiciones">Términos y Condiciones</a></div>
+          </div>
+          <div className="border-t border-silver-200 pt-6 text-xs text-ink-muted leading-relaxed space-y-3">
+            <p>FOCUS Hub LLC es una firma especializada en Mercadeo, Publicidad, Branding, Producciones y Tecnología, orientada al desarrollo y crecimiento comercial de empresas de la industria automotriz.</p>
+            <p>Nuestros servicios están sujetos a un proceso de evaluación y selección. La presentación de una aplicación o la participación en reuniones comerciales no garantiza su aprobación ni constituye un compromiso de contratación por ninguna de las partes.</p>
+            <p>Las piezas visuales presentadas ilustran nuestras capacidades creativas y de producción. Los resultados pueden variar según las condiciones del mercado, la inversión, la estructura operativa y la capacidad comercial de cada Dealership. FOCUS Hub no garantiza resultados comerciales específicos.</p>
+            <p>La información proporcionada a través de nuestros formularios será utilizada para evaluar solicitudes y gestionar las comunicaciones correspondientes, de conformidad con nuestra Política de Privacidad. La prestación de nuestros servicios estará sujeta a los acuerdos contractuales correspondientes.</p>
+            <p>© {new Date().getFullYear()} FOCUS Hub LLC. Todos los derechos reservados.</p>
+          </div>
+        </div>
+      </footer>
     </>
   );
 }
