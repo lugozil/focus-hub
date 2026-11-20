@@ -119,7 +119,7 @@ export default function ContactoBPage() {
       <footer className="border-t border-silver-200 bg-silver-50">
         <div className="mx-auto max-w-4xl px-6 py-10 space-y-6">
           <div className="grid sm:grid-cols-3 gap-6">
-            <div><img src="/logo-focus.png" alt="FOCUS Hub" className="h-6 w-auto" /><p className="mt-1 font-semibold text-xs tracking-widest text-ink">PERFORMANCE</p><p className="mt-3 text-sm text-ink-muted">Firma especializada en mercadeo automotriz.</p></div>
+            <div><img src="/logo-focus.png" alt="FOCUS Hub" className="h-6 w-auto" /><p className="mt-3 text-sm text-ink-muted">Firma especializada en mercadeo automotriz.</p></div>
             <div className="space-y-2 text-sm"><h3 className="font-semibold">Contacto</h3><a className="block text-ink-muted" href="mailto:sales@focushub.one">sales@focushub.one</a><a className="block text-ink-muted" href="tel:+17874177570">+1 (787) 417-7570</a></div>
             <div className="space-y-2 text-sm"><h3 className="font-semibold">Legal</h3><a className="block underline text-ink-muted" href="/politica-de-privacidad">Política de Privacidad</a><a className="block underline text-ink-muted" href="/terminos-y-condiciones">Términos y Condiciones</a></div>
           </div>

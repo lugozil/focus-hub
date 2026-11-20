@@ -29,8 +29,8 @@ function validate(values: Values, step: Step): Partial<Record<keyof Values,strin
   if (step === "personal") {
     if (!values.nombre.trim()) errors.nombre = "Ingresa tu nombre.";
     if (!values.apellido.trim()) errors.apellido = "Ingresa tu apellido.";
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(values.email.trim())) errors.email = "Ingresa un correo válido.";
-    if (!/^[0-9+()\\-\\s]{7,}$/.test(values.telefono.trim())) errors.telefono = "Ingresa un teléfono válido.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = "Ingresa un correo válido.";
+    if (!/^[0-9+()\-\s]{7,}$/.test(values.telefono.trim())) errors.telefono = "Ingresa un teléfono válido.";
   } else if (step === "commercial") {
     if (!values.dealership.trim()) errors.dealership = "Ingresa el nombre del Dealership.";
     if (!values.ubicacion.trim()) errors.ubicacion = "Ingresa la dirección del Dealership.";
