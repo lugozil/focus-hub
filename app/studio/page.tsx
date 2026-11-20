@@ -59,6 +59,22 @@ const SERVICES = [
 
 const SERVICE_OPTIONS = SERVICES.map((s) => s.title);
 
+// Iconos lineales (24×24) para las tres disciplinas creativas.
+const FORMATS = [
+  {
+    title: "Fotografía",
+    icon: "M4 8.5A1.5 1.5 0 015.5 7h2.3l1.4-2h5.6l1.4 2h2.3A1.5 1.5 0 0120 8.5v9a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.5v-9zM12 16.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z",
+  },
+  {
+    title: "Diseño gráfico",
+    icon: "M12 20a8 8 0 118-8c0 2-1.5 3-3 3h-2a1.5 1.5 0 00-1 2.6c.6.6.3 2.4-2 2.4zM7.5 11.5h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01",
+  },
+  {
+    title: "Video",
+    icon: "M15 10.5l5-3v9l-5-3M4 7h11v10H4z",
+  },
+];
+
 const STUDIO_EVENTS = {
   formularioCompleto: "studio_formulario_completo",
   fase1: "studio_fase1",
@@ -102,58 +118,46 @@ export default function StudioPage() {
       <PageviewTracker variante="studio" />
       <LandingTracker landing="studio" />
       <main id="top">
-        {/* ---------- HERO ---------- */}
-        <section className="relative isolate overflow-hidden">
-          <div aria-hidden className="mesh-bg">
-            <div className="mesh-blob mesh-blob--a" />
-            <div className="mesh-blob mesh-blob--b" />
-            <div className="mesh-blob mesh-blob--c" />
-            <div className="mesh-fade" />
+        {/* ---------- HERO (cinematográfico, con indicador REC) ---------- */}
+        <section className="relative isolate overflow-hidden bg-[#111] text-white">
+          <div aria-hidden className="absolute inset-0 -z-20">
+            <Image
+              src="/studio-hero-v3.jpg"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="studio-hero-push object-cover object-[28%_center]"
+            />
           </div>
+          <div aria-hidden className="studio-hero-shade absolute inset-0 -z-10" />
 
-          <div className="relative mx-auto max-w-6xl px-5 sm:px-6 pt-8 pb-12 md:pt-16 md:pb-20 grid items-center gap-8 md:gap-12 md:grid-cols-[1.05fr_1fr]">
-            <div className="text-center md:text-left animate-fade-up">
-              <span className="eyebrow-pill">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path
-                    d="M15 10l5-3v10l-5-3M4 6h11v12H4z"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+          <div className="mx-auto grid min-h-[560px] max-w-6xl content-end gap-[18px] px-5 pt-14 pb-9 sm:px-6 lg:min-h-[660px] lg:pt-24 lg:pb-14">
+            <span className="studio-rec" aria-hidden="true">REC · FOCUS Hub Studio</span>
+            <span className="inline-flex min-h-9 items-center gap-2 justify-self-start rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-sm font-semibold text-white">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Para dueños y gerentes de dealers
+            </span>
+            <h1 className="max-w-[14em] text-[clamp(32px,8.4vw,56px)] font-[650] leading-[1.06] tracking-[-0.03em] text-white text-balance">
+              Contenido a la altura de tu dealership.
+            </h1>
+            <p className="max-w-xl text-base md:text-lg leading-relaxed text-white/85">
+              Producción audiovisual especializada en la industria automotriz, diseñada para proyectar profesionalismo, generar confianza y atraer potenciales compradores.
+            </p>
+            <div className="mt-1">
+              <a
+                href="#formulario"
+                data-track-cta="Iniciar mi aplicación"
+                data-track-ubicacion="Hero"
+                className="inline-flex w-full sm:w-auto min-h-[52px] items-center justify-center gap-2.5 rounded-full bg-white px-7 text-[15px] font-semibold text-ink hover:bg-silver-100 transition-colors focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-white"
+              >
+                Iniciar mi aplicación
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                  <path d="M3 7h8m0 0L7.5 3.5M11 7l-3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                FOCUS Hub Studio
-              </span>
-
-              <h1 className="mt-4 text-[26px] sm:text-3xl lg:text-[40px] font-semibold tracking-[-0.025em] text-ink leading-[1.12] text-balance">
-                Contenido a la altura de tu dealership.
-              </h1>
-
-              <p className="mt-4 text-[15px] md:text-base text-ink-muted leading-relaxed max-w-md mx-auto md:mx-0">
-                Producción audiovisual especializada en la industria automotriz, diseñada para proyectar profesionalismo, generar confianza y atraer potenciales compradores.
-              </p>
-
-              
-
-              <div className="mt-6">
-                <CtaButton ubicacion="Hero">Iniciar mi aplicación</CtaButton>
-              </div>
-            </div>
-
-            {/* Hero: videógrafo de FOCUS Hub Studio filmando un SUV frente al dealer */}
-            <div className="relative mx-auto w-full max-w-[520px] md:max-w-none animate-fade-up">
-              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-silver-200 bg-silver-100 shadow-xl">
-                <Image
-                  src="/studio-hero-v3.jpg"
-                  alt="Imagen provisional de producción audiovisual automotriz"
-                  fill
-                  priority
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-              <p className="mt-2 text-center text-xs text-ink-muted">Preview: video principal pendiente.</p>
+              </a>
             </div>
           </div>
         </section>
@@ -165,10 +169,14 @@ export default function StudioPage() {
             <p className="mt-3 text-ink-muted">Tres disciplinas creativas que se complementan para crear contenido con identidad, coherencia e impacto.</p>
           </div>
           <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
-            {["Fotografía", "Diseño gráfico", "Video"].map((format) => (
-              <div key={format} className="flex aspect-[9/14] max-h-96 flex-col items-center justify-center rounded-3xl border-4 border-neutral-800 bg-silver-100 p-5 text-center">
-                <h3 className="text-lg font-semibold text-ink">{format}</h3>
-                <p className="mt-2 text-xs text-ink-muted">Pieza real pendiente</p>
+            {FORMATS.map((format) => (
+              <div key={format.title} className="flex items-center gap-4 rounded-3xl border border-silver-200 bg-white px-5 py-4 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.12)] sm:flex-col sm:justify-center sm:py-8 sm:text-center">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-ink text-white sm:h-14 sm:w-14">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d={format.icon} stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <h3 className="text-lg font-semibold text-ink">{format.title}</h3>
               </div>
             ))}
           </div>
@@ -196,14 +204,14 @@ export default function StudioPage() {
               {title: "Capacidad operativa", problem: "No cuentas con el tiempo, los recursos o el equipo necesario para producir contenido de calidad.", solution: "Ponemos a tu disposición un equipo creativo especializado que se encarga de la planificación, producción y edición de tu contenido."},
               {title: "Calidad de producción", problem: "Tu contenido no refleja la calidad de tu inventario ni el verdadero nivel de tu negocio.", solution: "Disponemos de cámaras profesionales, equipamiento especializado y talento creativo para lograr una ejecución visual del más alto nivel."},
             ].map((item) => (
-              <details key={item.title} className="group rounded-2xl border border-silver-200 bg-white p-6">
+              <details key={item.title} className="group rounded-2xl border border-silver-300 bg-silver-200/70 p-6 transition-colors hover:bg-silver-200">
                 <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                   <span className="text-sm font-medium text-ink-muted">{item.title}</span>
                   <span className="mt-5 block text-xl font-semibold text-ink">{item.problem}</span>
                   <span className="mt-5 block text-sm text-ink-muted group-open:hidden">Selecciona para ver la solución ↻</span>
                   <span className="mt-5 hidden text-sm text-ink-muted group-open:block">Ocultar solución ↑</span>
                 </summary>
-                <p className="mt-4 border-t border-silver-200 pt-4 text-ink"> {item.solution}</p>
+                <p className="mt-4 border-t border-silver-300 pt-4 text-ink">{item.solution}</p>
               </details>
             ))}
           </div>
@@ -240,8 +248,8 @@ export default function StudioPage() {
         {/* ---------- FORMULARIO ---------- */}
         <section className="relative">
           <div id="formulario" className="mx-auto max-w-md px-5 sm:px-6 py-14 md:py-20 scroll-mt-20">
-            <div className="mb-6 text-center">
-              <h2 className="text-[22px] md:text-2xl font-semibold tracking-[-0.02em] text-ink leading-[1.2]">
+            <div className="mb-6 text-center md:-mx-40">
+              <h2 className="text-2xl font-semibold tracking-tight text-ink md:text-4xl">
                 Da el primer paso hacia un contenido de mayor nivel.
               </h2>
               <p className="mt-2 text-sm text-ink-muted leading-relaxed">
@@ -264,8 +272,7 @@ export default function StudioPage() {
               variante="studio"
               serviceOptions={SERVICE_OPTIONS}
               events={STUDIO_EVENTS}
-              appointmentLabel="tu reunión con nuestro equipo creativo"
-              submitLabel="Continuar para agendar"
+              appointmentLabel="nuestro equipo creativo"
             />
           </div>
         </section>
@@ -281,7 +288,7 @@ export default function StudioPage() {
       <footer className="border-t border-silver-200 bg-silver-50">
         <div className="mx-auto max-w-4xl px-6 py-10 space-y-6">
           <div className="grid sm:grid-cols-3 gap-6">
-            <div><Image src="/focus-studio-logo.png" alt="FOCUS Hub Studio" width={1048} height={112} className="h-6 w-auto" /><p className="mt-3 text-sm text-ink-muted">Producción audiovisual especializada en la industria automotriz.</p></div>
+            <div><Image src="/focus-studio-logo.png" alt="FOCUS Hub Studio" width={1048} height={112} className="h-[18px] w-auto" /><p className="mt-3 text-sm text-ink-muted">Estudio Creativo Especializado en la industria automotriz</p></div>
             <div className="space-y-2 text-sm"><h3 className="font-semibold">Contacto</h3><a className="block text-ink-muted" href="mailto:sales@focushub.one">sales@focushub.one</a><a className="block text-ink-muted" href="tel:+17874177570">+1 (787) 417-7570</a></div>
             <div className="space-y-2 text-sm"><h3 className="font-semibold">Legal</h3><a className="block underline text-ink-muted" href="/politica-de-privacidad">Política de Privacidad</a><a className="block underline text-ink-muted" href="/terminos-y-condiciones">Términos y Condiciones</a></div>
           </div>

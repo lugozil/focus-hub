@@ -268,3 +268,38 @@ html { scroll-behavior: smooth; }
 .animate-fade-up { animation: fadeUp 0.7s ease-out both; }
 .animate-fade-up-delay { animation: fadeUp 0.7s ease-out 0.1s both; }
 .animate-fade-up-delay-2 { animation: fadeUp 0.7s ease-out 0.2s both; }
+
+/* ---------- Studio: hero cinematográfico con indicador REC ---------- */
+.studio-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.9);
+}
+.studio-rec::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff4d3d;
+  animation: studioRecBlink 1.4s steps(2, jump-none) infinite;
+}
+@keyframes studioRecBlink { 50% { opacity: 0.2; } }
+.studio-hero-push { animation: studioHeroPush 18s ease-in-out infinite alternate; transform-origin: 30% 40%; }
+@keyframes studioHeroPush { from { transform: scale(1); } to { transform: scale(1.1); } }
+.studio-hero-shade {
+  background:
+    linear-gradient(90deg, rgba(10,10,10,0.88) 0%, rgba(10,10,10,0.62) 55%, rgba(10,10,10,0.2) 100%),
+    linear-gradient(0deg, rgba(10,10,10,0.7), rgba(10,10,10,0) 45%);
+}
+@media (max-width: 767px) {
+  .studio-hero-shade {
+    background: linear-gradient(0deg, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.7) 55%, rgba(10,10,10,0.35) 100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-rec::before, .studio-hero-push { animation: none; }
+}

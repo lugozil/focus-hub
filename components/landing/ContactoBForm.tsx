@@ -12,6 +12,7 @@ declare global {
 
 type Values = {
   nombre: string;
+  apellido: string;
   telefono: string;
   email: string;
   dealership: string;
@@ -31,8 +32,8 @@ type ContactoBFormProps = {
     fase1: string;
     citaAgendada: string;
   };
+  /** Con quién es la reunión, p. ej. "nuestro equipo creativo". */
   appointmentLabel?: string;
-  submitLabel?: string;
 };
 
 const CONTACTO_B_EVENTS = {
@@ -41,7 +42,7 @@ const CONTACTO_B_EVENTS = {
   citaAgendada: "contacto_b_cita_agendada",
 };
 
-type Step = "form" | "schedule" | "success";
+type Step = "personal" | "commercial" | "schedule" | "success";
 type Status = "idle" | "submitting" | "error";
 
 const CARGO_OPTIONS = [
@@ -55,6 +56,7 @@ const CARROS_OPTIONS = ["Menos de 10", "10-25", "25-50", "Más de 50"];
 
 const INITIAL_VALUES: Values = {
   nombre: "",
+  apellido: "",
   telefono: "",
   email: "",
   dealership: "",
@@ -66,13 +68,19 @@ const INITIAL_VALUES: Values = {
 
 type Errors = Partial<Record<keyof Values, string>>;
 
-function validate(values: Values, requireServicios: boolean): Errors {
+function validate(values: Values, step: Step, requireServicios: boolean): Errors {
   const errors: Errors = {};
 
-  if (values.nombre.trim().length < 2) errors.nombre = "Ingresa tu nombre completo.";
-  if (!/^[0-9+()\-\s]{7,}$/.test(values.telefono.trim())) errors.telefono = "Ingresa un teléfono válido.";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = "Ingresa un correo válido.";
-  if (values.dealership.trim().length < 2) errors.dealership = "Ingresa el nombre de tu dealership.";
+  if (step === "personal") {
+    if (!values.nombre.trim()) errors.nombre = "Ingresa tu nombre.";
+    if (!values.apellido.trim()) errors.apellido = "Ingresa tu apellido.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) errors.email = "Ingresa un correo válido.";
+    if (!/^[0-9+()\-\s]{7,}$/.test(values.telefono.trim())) errors.telefono = "Ingresa un teléfono válido.";
+    return errors;
+  }
+  if (step !== "commercial") return errors;
+
+  if (values.dealership.trim().length < 2) errors.dealership = "Ingresa el nombre del Dealership.";
   if (!values.cargo) errors.cargo = "Selecciona una opción.";
   if (values.cargo === "Otro" && values.cargoOtro.trim().length === 0) {
     errors.cargoOtro = "Escribe tu cargo.";
@@ -286,13 +294,12 @@ export function ContactoBForm({
   variante = "contacto-b",
   serviceOptions,
   events = CONTACTO_B_EVENTS,
-  appointmentLabel = "tu auditoría gratuita",
-  submitLabel = "Agendar mi auditoría",
+  appointmentLabel = "nuestro equipo de especialistas",
 }: ContactoBFormProps = {}) {
   const requireServicios = Boolean(serviceOptions?.length);
   const [values, setValues] = useState<Values>(INITIAL_VALUES);
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [step, setStep] = useState<Step>("form");
+  const [step, setStep] = useState<Step>("personal");
   const [status, setStatus] = useState<Status>("idle");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -314,7 +321,7 @@ export function ContactoBForm({
   const update = (patch: Partial<Values>) =>
     setValues((prev) => ({ ...prev, ...patch }));
 
-  const errors = validate(values, requireServicios);
+  const errors = validate(values, step, requireServicios);
 
   const toggleServicio = (servicio: string) =>
     setValues((prev) => ({
@@ -336,7 +343,9 @@ export function ContactoBForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         variante,
-        nombre: values.nombre.trim(),
+        nombre: [values.nombre.trim(), values.apellido.trim()].join(" "),
+        firstName: values.nombre.trim(),
+        lastName: values.apellido.trim(),
         telefono: values.telefono.trim(),
         email: values.email.trim(),
         dealership: values.dealership.trim(),
@@ -348,24 +357,31 @@ export function ContactoBForm({
     });
   }
 
-  function handleContinuar(e: React.FormEvent) {
+  async function handleContinuar(e: React.FormEvent) {
     e.preventDefault();
     setFormSubmitted(true);
-    if (Object.keys(validate(values, requireServicios)).length > 0) return;
-    track(events.formularioCompleto);
-    window.dataLayer?.push({ event: events.fase1 });
-    sendEvent("form_submit");
-    sendEvent("form_field", { name: "Calendario (fase 2)" });
-    // No bloqueante: el lead se guarda con placeholder de cita mientras la
-    // persona ve el calendario; si agenda, la fase 2 actualiza el mismo
-    // registro (match por email+teléfono) en vez de crear uno nuevo.
-    submitLead({
-      agendado: false,
-      fechaCita: "NO AGENDO",
-      horaCita: "NO AGENDO",
-      fechaHoraCita: "",
-    }).catch((error) => console.error("Error al guardar el lead (fase 1)", error));
-    setStep("schedule");
+    if (Object.keys(errors).length > 0) return;
+    if (step === "personal") {
+      setFormSubmitted(false);
+      setStep("commercial");
+      return;
+    }
+    // Fase 1: el lead se guarda sin cita; si agenda, la fase 2 actualiza el
+    // mismo registro (match por email + teléfono).
+    setStatus("submitting");
+    try {
+      const res = await submitLead({ agendado: false, fechaCita: "NO AGENDO", horaCita: "NO AGENDO", fechaHoraCita: "" });
+      if (!res.ok) throw new Error("request-failed");
+      track(events.formularioCompleto);
+      window.dataLayer?.push({ event: events.fase1 });
+      sendEvent("form_submit");
+      sendEvent("form_field", { name: "Calendario (fase 3)" });
+      setStatus("idle");
+      setFormSubmitted(false);
+      setStep("schedule");
+    } catch {
+      setStatus("error");
+    }
   }
 
   async function handleAgendarCita() {
@@ -407,7 +423,7 @@ export function ContactoBForm({
           ¡Listo, {values.nombre.split(" ")[0]}!
         </h2>
         <p className="mt-3 text-sm text-ink-muted leading-relaxed max-w-sm mx-auto">
-          Tu cita quedó agendada para el{" "}
+          Hemos recibido tu solicitud de reunión para el{" "}
           <span className="text-ink font-medium">
             {selectedDate ? FULL_DATE_FORMATTER.format(selectedDate) : ""}
           </span>{" "}
@@ -415,7 +431,7 @@ export function ContactoBForm({
           <span className="text-ink font-medium">
             {selectedTime ? `${formatTime(selectedTime)} (hora de Puerto Rico)` : ""}
           </span>
-          . Te enviaremos la confirmación a tu correo.
+          . Nuestro equipo se comunicará contigo para confirmar los próximos pasos.
         </p>
       </div>
     );
@@ -426,7 +442,7 @@ export function ContactoBForm({
       <div className="rounded-2xl border border-silver-200 bg-white p-6 md:p-8 space-y-5 animate-fade-up">
         <button
           type="button"
-          onClick={() => setStep("form")}
+          onClick={() => { setStatus("idle"); setStep("commercial"); }}
           className="inline-flex items-center gap-1.5 text-[13px] font-medium text-ink-muted hover:text-ink transition-colors"
         >
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -442,14 +458,16 @@ export function ContactoBForm({
         </button>
 
         <div>
-          <h2 className="text-lg font-semibold text-ink">Agenda tu cita</h2>
+          <p className="text-xs text-ink-muted">Paso 3 · Agendamiento</p>
+          <h2 className="text-lg font-semibold text-ink">Agenda Tu Reunión</h2>
           <p className="mt-1 text-sm text-ink-muted">
-            Selecciona el día y la hora que prefieras para {appointmentLabel}.
+            Selecciona el día y la hora de tu preferencia para reunirte con {appointmentLabel}.
           </p>
         </div>
 
         <div>
-          <label className="form-label">Selecciona un día</label>
+          <label className="form-label">Selecciona una fecha</label>
+          <p className="text-xs text-ink-muted mb-2">Horarios sujetos a confirmación del equipo.</p>
 
           <div className="rounded-2xl border border-silver-200 p-3 md:p-4">
             <div className="flex items-center justify-between px-1 pb-3">
@@ -544,7 +562,7 @@ export function ContactoBForm({
         )}
 
         {status === "error" && (
-          <p className="form-error">No pudimos agendar tu cita. Por favor intenta de nuevo.</p>
+          <p className="form-error">No pudimos registrar tu solicitud. Por favor intenta de nuevo.</p>
         )}
 
         <button
@@ -553,139 +571,109 @@ export function ContactoBForm({
           disabled={!selectedDate || !selectedTime || status === "submitting"}
           className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium px-6 py-3.5 hover:bg-ink-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {status === "submitting" ? "Agendando..." : "Agendar cita"}
+          {status === "submitting" ? "Agendando..." : "CONFIRMAR MI REUNIÓN"}
         </button>
       </div>
     );
   }
 
-  return (
-    <form
-      data-track-form
-      onSubmit={handleContinuar}
-      className="rounded-2xl border border-silver-200 bg-white p-6 md:p-8 space-y-5"
-      noValidate
-    >
-      <div>
-        <label className="form-label" htmlFor="nombre">Nombre y apellido</label>
-        <input
-          id="nombre"
-          type="text"
-          value={values.nombre}
-          onChange={(e) => update({ nombre: e.target.value })}
-          placeholder="Ej. María Rodríguez"
-          className={`form-control ${showErrors && errors.nombre ? "has-error" : ""}`}
-        />
-        {showErrors && errors.nombre && <p className="form-error">{errors.nombre}</p>}
-      </div>
-
-      <div>
-        <label className="form-label" htmlFor="telefono">Teléfono</label>
-        <input
-          id="telefono"
-          type="tel"
-          inputMode="tel"
-          value={values.telefono}
-          onChange={(e) => update({ telefono: e.target.value })}
-          placeholder="Ej. (787) 000-0000"
-          className={`form-control ${showErrors && errors.telefono ? "has-error" : ""}`}
-        />
-        {showErrors && errors.telefono && <p className="form-error">{errors.telefono}</p>}
-      </div>
-
-      <div>
-        <label className="form-label" htmlFor="email">Correo electrónico</label>
-        <input
-          id="email"
-          type="email"
-          value={values.email}
-          onChange={(e) => update({ email: e.target.value })}
-          placeholder="nombre@empresa.com"
-          className={`form-control ${showErrors && errors.email ? "has-error" : ""}`}
-        />
-        {showErrors && errors.email && <p className="form-error">{errors.email}</p>}
-      </div>
-
-      <div>
-        <label className="form-label" htmlFor="dealership">¿Cuál es el nombre de tu dealership?</label>
-        <input
-          id="dealership"
-          type="text"
-          value={values.dealership}
-          onChange={(e) => update({ dealership: e.target.value })}
-          placeholder="Ej. Auto Group San Juan"
-          className={`form-control ${showErrors && errors.dealership ? "has-error" : ""}`}
-        />
-        {showErrors && errors.dealership && <p className="form-error">{errors.dealership}</p>}
-      </div>
-
-      <div>
-        <label className="form-label" htmlFor="cargo">¿Cuál es tu cargo actual?</label>
-        <select
-          id="cargo"
-          value={values.cargo}
-          onChange={(e) => update({ cargo: e.target.value })}
-          className={`form-control ${showErrors && errors.cargo ? "has-error" : ""}`}
-        >
-          <option value="" disabled>Selecciona una opción</option>
-          {CARGO_OPTIONS.map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-        {showErrors && errors.cargo && <p className="form-error">{errors.cargo}</p>}
-
-        {values.cargo === "Otro" && (
-          <input
-            type="text"
-            value={values.cargoOtro}
-            onChange={(e) => update({ cargoOtro: e.target.value })}
-            placeholder="Escribe tu cargo"
-            className={`form-control mt-2 ${showErrors && errors.cargoOtro ? "has-error" : ""}`}
-          />
-        )}
-        {showErrors && errors.cargoOtro && <p className="form-error">{errors.cargoOtro}</p>}
-      </div>
-
-      <div>
-        <label className="form-label" htmlFor="carrosPorMes">
-          ¿Cuál es la cantidad promedio de carros que vendes al mes?
-        </label>
-        <select
-          id="carrosPorMes"
-          value={values.carrosPorMes}
-          onChange={(e) => update({ carrosPorMes: e.target.value })}
-          className={`form-control ${showErrors && errors.carrosPorMes ? "has-error" : ""}`}
-        >
-          <option value="" disabled>Selecciona una opción</option>
-          {CARROS_OPTIONS.map((option) => (
-            <option key={option} value={option}>{option}</option>
-          ))}
-        </select>
-        {showErrors && errors.carrosPorMes && <p className="form-error">{errors.carrosPorMes}</p>}
-      </div>
-
-      {serviceOptions && serviceOptions.length > 0 && (
-        <div>
-          <label className="form-label" id="servicios-label">
-            ¿Qué servicios te interesan?{" "}
-            <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
-          </label>
-          <ServiceMultiSelect
-            options={serviceOptions}
-            selected={values.servicios}
-            onToggle={toggleServicio}
-            hasError={Boolean(showErrors && errors.servicios)}
-          />
-          {showErrors && errors.servicios && <p className="form-error">{errors.servicios}</p>}
-        </div>
-      )}
-
-      <button
-        type="submit"
-        className="w-full inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium px-6 py-3.5 hover:bg-ink-soft transition-colors"
+  const textField = (key: "nombre" | "apellido" | "email" | "telefono" | "dealership", label: string, type = "text", autoComplete?: string) => (
+    <div key={key}>
+      <label className="form-label" htmlFor={key}>{label}</label>
+      <input
+        id={key}
+        type={type}
+        autoComplete={autoComplete}
+        value={values[key]}
+        onChange={(e) => update({ [key]: e.target.value })}
+        className={`form-control ${showErrors && errors[key] ? "has-error" : ""}`}
+      />
+      {showErrors && errors[key] && <p className="form-error">{errors[key]}</p>}
+    </div>
+  );
+  const selectField = (key: "cargo" | "carrosPorMes", label: string, options: string[]) => (
+    <div key={key}>
+      <label className="form-label" htmlFor={key}>{label}</label>
+      <select
+        id={key}
+        value={values[key]}
+        onChange={(e) => update({ [key]: e.target.value })}
+        className={`form-control ${showErrors && errors[key] ? "has-error" : ""}`}
       >
-        {submitLabel}
+        <option value="" disabled>Selecciona una opción</option>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+      {showErrors && errors[key] && <p className="form-error">{errors[key]}</p>}
+    </div>
+  );
+
+  return (
+    <form data-track-form onSubmit={handleContinuar} className="rounded-2xl border border-silver-200 bg-white p-6 md:p-8 space-y-5" noValidate>
+      <div>
+        <p className="text-xs text-ink-muted">Paso {step === "personal" ? 1 : 2}</p>
+        <h3 className="mt-1 text-lg font-semibold">{step === "personal" ? "Información Personal" : "Información Comercial"}</h3>
+      </div>
+      {step === "personal" ? (
+        <>
+          {textField("nombre", "Nombre", "text", "given-name")}
+          {textField("apellido", "Apellido", "text", "family-name")}
+          {textField("email", "Correo electrónico", "email", "email")}
+          {textField("telefono", "Número de teléfono", "tel", "tel")}
+        </>
+      ) : (
+        <>
+          {textField("dealership", "Nombre del Dealership", "text", "organization")}
+          <div>
+            {selectField("cargo", "Cargo actual", CARGO_OPTIONS)}
+            {values.cargo === "Otro" && (
+              <input
+                type="text"
+                aria-label="Escribe tu cargo"
+                value={values.cargoOtro}
+                onChange={(e) => update({ cargoOtro: e.target.value })}
+                placeholder="Escribe tu cargo"
+                className={`form-control mt-2 ${showErrors && errors.cargoOtro ? "has-error" : ""}`}
+              />
+            )}
+            {showErrors && errors.cargoOtro && <p className="form-error">{errors.cargoOtro}</p>}
+          </div>
+          {selectField("carrosPorMes", "¿Cuántos vehículos venden al mes?", CARROS_OPTIONS)}
+          {serviceOptions && serviceOptions.length > 0 && (
+            <div>
+              <label className="form-label" id="servicios-label">
+                ¿Qué servicios te interesan?{" "}
+                <span className="font-normal text-ink-faint">(puedes elegir varios)</span>
+              </label>
+              <ServiceMultiSelect
+                options={serviceOptions}
+                selected={values.servicios}
+                onToggle={toggleServicio}
+                hasError={Boolean(showErrors && errors.servicios)}
+              />
+              {showErrors && errors.servicios && <p className="form-error">{errors.servicios}</p>}
+            </div>
+          )}
+        </>
+      )}
+      {status === "error" && <p role="alert" className="form-error">No pudimos enviar tu aplicación. Inténtalo de nuevo.</p>}
+      <button type="submit" disabled={status === "submitting"} className="w-full rounded-full bg-ink text-white text-sm font-medium px-6 py-3.5 disabled:opacity-50">
+        {status === "submitting" ? "Enviando..." : "CONTINUAR"}
       </button>
+      {step === "commercial" && (
+        <button
+          type="button"
+          disabled={status === "submitting"}
+          className="block mx-auto text-sm text-ink-muted"
+          onClick={() => { setStatus("idle"); setFormSubmitted(false); setStep("personal"); }}
+        >
+          Volver
+        </button>
+      )}
+      <p className="text-xs text-center text-ink-muted">Al continuar, solicitas que nuestro equipo evalúe tu aplicación y se comunique contigo para gestionar tu solicitud.</p>
+      <p className="text-xs text-center text-ink-muted">
+        <a href="/politica-de-privacidad" target="_blank" rel="noopener noreferrer" className="underline">Política de Privacidad</a> |{" "}
+        <a href="/terminos-y-condiciones" target="_blank" rel="noopener noreferrer" className="underline">Términos y Condiciones</a>
+      </p>
     </form>
   );
 }
