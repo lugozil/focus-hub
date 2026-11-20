@@ -236,11 +236,8 @@ export default function StudioPage() {
                 ))}
               </ol>
             </div>
-            <div className="text-center">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-silver-200">
-                <Image src="/studio-hero-v3.jpg" alt="Imagen provisional de producción audiovisual" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" />
-              </div>
-              <p className="mt-2 text-xs text-ink-muted">Preview: fotografía definitiva del equipo pendiente.</p>
+            <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-2xl border border-silver-200">
+              <Image src="/studio-equipo.jpg" alt="Integrante del equipo de FOCUS Hub Studio trabajando en la oficina" fill sizes="(min-width: 768px) 448px, 100vw" className="object-cover object-[center_35%]" />
             </div>
           </div>
         </section>
