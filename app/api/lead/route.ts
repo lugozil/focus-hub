@@ -2,6 +2,13 @@ import { NextResponse, after } from "next/server";
 import { getSql } from "@/lib/db";
 import { VARIANTE_TO_LANDING } from "@/lib/landingEvents";
 
+// La espera de la fase 1 corre dentro de after(): la función debe vivir lo suficiente.
+export const maxDuration = 300;
+
+// Cuánto se espera antes de mandar a GHL un lead que aún no agendó. Si agenda
+// dentro de esta ventana, solo llega a GHL el envío con la cita (uno solo).
+const GHL_DELAY_SIN_CITA_MS = Number(process.env.GHL_DELAY_SIN_CITA_MS) || 3 * 60 * 1000;
+
 type LeadPayload = {
   variante: string;
   nombre: string;
@@ -122,16 +129,20 @@ async function sendToGHL(body: LeadPayload) {
   }
 }
 
-async function saveToDb(body: LeadPayload) {
+/**
+ * Guarda el lead y devuelve su `updated_at` exacto (como texto, para no perder
+ * microsegundos), o null si no se pudo guardar.
+ */
+async function saveToDb(body: LeadPayload): Promise<string | null> {
   const landing = VARIANTE_TO_LANDING[body.variante];
   const sql = getSql();
-  if (!landing || !sql) return;
+  if (!landing || !sql) return null;
 
   const agendado = Boolean(body.agendado);
   const cita = agendado ? `${body.fechaCita ?? ""} · ${body.horaCita ?? ""}` : null;
   try {
     // Fase 1 crea el lead; fase 2 (agendado) actualiza el mismo registro.
-    await sql`
+    const rows = await sql`
       insert into leads (landing, nombre, email, telefono, dealership, cargo, carros, servicios, agendado, cita)
       values (${landing}, ${body.nombre.trim()}, ${body.email.trim().toLowerCase()}, ${body.telefono.trim()},
               ${body.dealership ?? null}, ${body.cargo}, ${body.carrosPorMes ?? null}, ${body.servicios ?? null},
@@ -145,10 +156,61 @@ async function saveToDb(body: LeadPayload) {
         agendado = leads.agendado or excluded.agendado,
         cita = coalesce(excluded.cita, leads.cita),
         updated_at = now()
+      returning updated_at::text as updated_at
     `;
+    return (rows[0]?.updated_at as string | undefined) ?? null;
   } catch (error) {
     console.error("Error al guardar el lead en la base de datos", error);
+    return null;
   }
+}
+
+/**
+ * true si el registro sigue tal como lo dejó la fase 1. Si cambió, es porque
+ * llegó la fase 2 (que ya envió la cita a GHL) o un reenvío más nuevo de la
+ * fase 1 (que hará su propio envío): en ambos casos este envío sobra.
+ */
+async function sinCambiosDesde(body: LeadPayload, updatedAt: string) {
+  const landing = VARIANTE_TO_LANDING[body.variante];
+  const sql = getSql();
+  if (!landing || !sql) return true;
+  try {
+    const rows = await sql`
+      select 1 from leads
+      where landing = ${landing}
+        and email = ${body.email.trim().toLowerCase()}
+        and telefono = ${body.telefono.trim()}
+        and updated_at = ${updatedAt}::timestamptz
+    `;
+    return rows.length > 0;
+  } catch (error) {
+    // Ante la duda, se envía: es peor perder el lead que duplicarlo.
+    console.error("No se pudo verificar el envío pendiente a GHL; se envía igual", error);
+    return true;
+  }
+}
+
+/**
+ * Formularios de dos fases (Performance y Studio): la fase 1 se envía a GHL
+ * solo si la persona no agenda dentro de GHL_DELAY_SIN_CITA_MS; la fase 2
+ * (con cita) se envía de inmediato. Así a GHL entra una sola vez por lead.
+ */
+async function saveAndSendToGHL(body: LeadPayload) {
+  const dosFases = Boolean(VARIANTE_TO_LANDING[body.variante]);
+  if (!dosFases || body.agendado) {
+    await saveToDb(body);
+    await sendToGHL(body);
+    return;
+  }
+
+  const updatedAt = await saveToDb(body);
+  await new Promise((resolve) => setTimeout(resolve, GHL_DELAY_SIN_CITA_MS));
+
+  if (updatedAt && !(await sinCambiosDesde(body, updatedAt))) {
+    console.log(`GHL: envío sin cita cancelado (${body.variante}); el lead agendó o se volvió a enviar`);
+    return;
+  }
+  await sendToGHL(body);
 }
 
 export async function POST(request: Request) {
@@ -168,8 +230,7 @@ export async function POST(request: Request) {
   // Sheets y GHL corren en segundo plano después de responder: no deben
   // sumar latencia a lo que espera la persona en el formulario.
   after(() => sendToSheets(scriptUrl, body));
-  after(() => sendToGHL(body));
-  after(() => saveToDb(body));
+  after(() => saveAndSendToGHL(body));
 
   return NextResponse.json({ ok: true });
 }
